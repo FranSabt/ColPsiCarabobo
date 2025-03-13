@@ -1,0 +1,29 @@
+# Usamos una imagen base de Go
+FROM golang:1.24-alpine AS builder
+
+# Establecemos el directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copiamos el archivo go.mod y go.sum para descargar las dependencias
+COPY go.mod go.sum ./
+
+# Descargamos las dependencias
+RUN go mod download
+
+# Copiamos el resto del código fuente
+COPY . .
+
+# Compilamos la aplicación
+RUN CGO_ENABLED=0 GOOS=linux go build -o myapp .
+
+# Usamos una imagen base ligera para la etapa final
+FROM alpine:latest
+
+# Copiamos el binario compilado desde la etapa de construcción
+COPY --from=builder /app/myapp /myapp
+
+# Exponemos el puerto en el que correrá la aplicación
+EXPOSE 5000
+
+# Comando para ejecutar la aplicación
+CMD ["/myapp"]

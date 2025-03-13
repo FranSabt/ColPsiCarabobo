@@ -13,9 +13,8 @@ type AbstractUser struct {
 	Password string    `gorm:"size:512;not null"`
 }
 
-// PsiUserModel es la estructura que extiende UserModel
 type PsiUserModel struct {
-	AbstractUser AbstractUser // Composición para simular herencia
+	AbstractUser `gorm:"embedded"` // Incrusta los campos en PsiUserModel
 
 	// Identity
 	FirstName      string    `gorm:"size:255;not null"`
@@ -24,9 +23,9 @@ type PsiUserModel struct {
 	SecondLastName string    `gorm:"size:255"`
 	FPV            int       `gorm:"not null"`
 	CI             int       `gorm:"not null;unique"`
-	Nationality    string    `gorm:"size:1;not null"` // Cambiado a string para simular char
+	Nationality    string    `gorm:"size:1;not null"`
 	BornDate       time.Time `gorm:"type:date;not null"`
-	Genre          string    `gorm:"size:1;not null"` // Cambiado a string para simular char
+	Genre          string    `gorm:"size:1;not null"`
 
 	// Contact
 	ContactEmail             string `gorm:"size:255;not null"`
@@ -46,12 +45,12 @@ type PsiUserModel struct {
 	CelPhoneCarabobo     string `gorm:"size:20"`
 
 	// Outside Carabobo Direction
-	StateOutside                string `gorm:"size:255"` // Puedes usar un enum si lo defines
+	StateOutside                string `gorm:"size:255"`
 	MunicipalityOutSideCarabobo string `gorm:"size:255"`
 	PhoneOutSideCarabobo        string `gorm:"size:20"`
 	CelPhoneOutSideCarabobo     string `gorm:"size:20"`
 
 	// Relación con PsiUserColData
-	PsiUserColDataID uuid.UUID      `gorm:"type:uuid"` // Clave foránea
-	PsiUserColData   PsiUserColData `gorm:"foreignKey:PsiUserColDataID"`
+	PsiUserColDataID *uuid.UUID `gorm:"type:uuid"` // Clave foránea
+
 }

@@ -1,7 +1,7 @@
 package models
 
 type UserAdmin struct {
-	AbstractUser AbstractUser `gorm:"embedded"` // Usar embedded para composición
+	AbstractUser `gorm:"embedded"` // Usar embedded para composición
 
 	IsActive bool `gorm:"default:true"` // Por defecto, el admin está activo
 

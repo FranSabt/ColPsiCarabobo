@@ -73,5 +73,13 @@ func AutoMigrateDB(db *gorm.DB) error {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
 
+	db.Migrator().DropTable("psi_user_col_data")
+	db.Migrator().DropTable(&models.PsiUserColData{})
+
+	err = db.AutoMigrate(&models.PsiUserColData{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
+
 	return nil
 }
