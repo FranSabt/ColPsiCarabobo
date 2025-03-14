@@ -1,9 +1,13 @@
 package models
 
-type UserAdmin struct {
-	AbstractUser `gorm:"embedded"` // Usar embedded para composición
+import "github.com/google/uuid"
 
-	IsActive bool `gorm:"default:true"` // Por defecto, el admin está activo
+type UserAdmin struct {
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Username string    `gorm:"size:25;not null"`
+	Email    string    `gorm:"size:50;not null"`
+	Password string    `gorm:"size:512;not null"`
+	IsActive bool      `gorm:"default:true"` // Por defecto, el admin está activo
 
 	// Permisos sobre administradores
 	CanCreateAdmin bool `gorm:"default:false"`

@@ -1,4 +1,4 @@
-package psi_use_controller
+package psi_user_controller
 
 import (
 	"encoding/csv"
@@ -80,7 +80,7 @@ func ProcessCsv(src io.Reader) (*[]PsiUserCsv, error) {
 		user := PsiUserCsv{
 			UserName:                    record[0],
 			Email:                       record[1],
-			Password:                    record[2],
+			Password:                    RandomPass(),
 			FirstName:                   record[3],
 			SecondName:                  record[4],
 			LastName:                    record[5],

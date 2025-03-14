@@ -2,15 +2,20 @@ package psi_user_router
 
 import (
 	psi_user_admin_presenter "github.com/FranSabt/ColPsiCarabobo/src/psi-user/admin"
+	psiuser_presenter "github.com/FranSabt/ColPsiCarabobo/src/psi-user/psi-user"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
-func PsiUserRouter(group fiber.Router) {
+func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 	group.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Psi User")
 	})
 
 	// get all /public
+	group.Get("/get-all", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetPsiUsers(c, db)
+	})
 	// get details /public
 
 	// get details self
@@ -21,7 +26,7 @@ func PsiUserRouter(group fiber.Router) {
 	// update PSI
 	// create massive
 	group.Post("/upload-csv", func(c *fiber.Ctx) error {
-		return psi_user_admin_presenter.UploadCsv(c)
+		return psi_user_admin_presenter.UploadCsv(c, db)
 	})
 
 }

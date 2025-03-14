@@ -12,6 +12,9 @@ import (
 func main() {
 	app := fiber.New()
 
+	// logger
+	app.Use(config.ResponseLogger)
+
 	// Cargar las variables de entorno desde el archivo .env
 	adminUsername := config.EnvConfig("ADMIN_USERNAME")
 	log.Println("ADMIN_USERNAME: ", adminUsername)

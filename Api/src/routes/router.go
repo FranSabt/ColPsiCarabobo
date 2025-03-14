@@ -8,6 +8,6 @@ import (
 
 func Router(group fiber.Router, db *gorm.DB) {
 	psiUser := group.Group("/psi-user")
-	psi_user_routes.PsiUserRouter(psiUser)
+	psi_user_routes.PsiUserRouter(psiUser, db)
 
 }

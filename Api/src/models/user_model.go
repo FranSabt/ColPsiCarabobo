@@ -6,15 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
-type AbstractUser struct {
+type PsiUserModel struct {
 	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	Username string    `gorm:"size:25;not null"`
 	Email    string    `gorm:"size:50;not null"`
 	Password string    `gorm:"size:512;not null"`
-}
-
-type PsiUserModel struct {
-	AbstractUser `gorm:"embedded"` // Incrusta los campos en PsiUserModel
 
 	// Identity
 	FirstName      string    `gorm:"size:255;not null"`
