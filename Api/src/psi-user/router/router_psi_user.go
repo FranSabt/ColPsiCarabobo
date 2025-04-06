@@ -29,4 +29,8 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 		return psi_user_admin_presenter.UploadCsv(c, db)
 	})
 
+	group.Post("/psi-user", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.AdminCreatePsiUser(c, db)
+	})
+
 }

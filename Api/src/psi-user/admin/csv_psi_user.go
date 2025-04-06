@@ -1,9 +1,13 @@
 package psi_user_admin_presenter
 
 import (
-	psi_use_controller "github.com/FranSabt/ColPsiCarabobo/src/psi-user/controller"
+	"fmt"
+	"net/http"
+
+	psi_user_controller "github.com/FranSabt/ColPsiCarabobo/src/psi-user/controller"
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	psi_user_mapper "github.com/FranSabt/ColPsiCarabobo/src/psi-user/mapper"
+	psi_user_request "github.com/FranSabt/ColPsiCarabobo/src/psi-user/request-structs"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -29,7 +33,7 @@ func UploadCsv(c *fiber.Ctx, db *gorm.DB) error {
 	defer src.Close()
 
 	// Procesar el archivo CSV
-	result, err := psi_use_controller.ProcessCsv(src)
+	result, err := psi_user_controller.ProcessCsv(src)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "No se pudo procesar el CSV",
@@ -93,3 +97,68 @@ func UploadCsv(c *fiber.Ctx, db *gorm.DB) error {
 		"failed_registres":           fail,
 	})
 }
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+func AdminCreatePsiUser(c *fiber.Ctx, db *gorm.DB) error {
+	var request psi_user_request.PsiUserCreateRequest
+
+	// Parsear el cuerpo JSON
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Cuerpo de solicitud inválido",
+			"details": err.Error(),
+		})
+	}
+
+	// ------- Funcion para hacer los check de los campos unicos ------- //
+	can_pass, conflicts, err := psi_user_controller.CheckPsiUserUniqueFields(db, request)
+	if err != nil {
+		return c.Status(http.StatusCreated).JSON(fiber.Map{
+			"success":   false,
+			"message":   err.Error(),
+			"conflicts": conflicts, // Opcional: devolver los datos creados
+		})
+	}
+	fmt.Println("Can pass: ", can_pass)
+	if !can_pass {
+		return c.Status(http.StatusCreated).JSON(fiber.Map{
+			"success":   false,
+			"message":   "Conflict found",
+			"conflicts": conflicts, // Opcional: devolver los datos creados
+		})
+	} // check error
+
+	// ------- Create User in DB ------- //
+	psi_user, psi_user_col_data, err := psi_user_controller.CreateNewPsiUser(db, request)
+	if err != nil {
+		return c.Status(http.StatusCreated).JSON(fiber.Map{
+			"success": false,
+			"message": "Error ehile creatin the new USer",
+			"details": err.Error(),
+		})
+	}
+
+	// ------- Send Email ------//
+	// TODO: Send email
+
+	// Respuesta exitosa
+	return c.Status(http.StatusCreated).JSON(fiber.Map{
+		"success":           true,
+		"psi_user":          psi_user,
+		"psi_user_col_data": psi_user_col_data, // Opcional: devolver los datos creados
+	})
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+// 	FUNCIONES AUXILIARES //
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
