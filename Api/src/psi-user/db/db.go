@@ -1,10 +1,12 @@
 package psi_user_db
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -112,4 +114,45 @@ func CheckIfExistPsiUser(db *gorm.DB, column, value string) (bool, error) {
 
 	// Si count > 0, el usuario existe
 	return count > 0, nil
+}
+
+// En psi_user_db.go
+func SearchPsiUsersByQuery(db *gorm.DB, baseQuery, countQuery *gorm.DB, pageNum, pageSize int) ([]models.PsiUserModel, int64, error) {
+	var users []models.PsiUserModel
+	var total int64
+
+	// Ejecutar query de conteo primero
+	if err := countQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Aplicar paginación y ejecutar query principal
+	offset := (pageNum - 1) * pageSize
+	if err := baseQuery.Limit(pageSize).Offset(offset).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}
+
+func GetPsiUserByIdDetails(db *gorm.DB, id uuid.UUID) (*models.PsiUserModel, *models.PsiUserColData, error) {
+	psiUser := &models.PsiUserModel{}
+	err := db.Where("id = ?", id).First(psiUser).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errors.New("psi_user record not found")
+		}
+		return nil, nil, err
+	}
+
+	psiUserColData := &models.PsiUserColData{}
+	err = db.Where("id = ?", psiUser.PsiUserColDataID).First(psiUserColData).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errors.New("psi_user_col_data record not found")
+		}
+		return nil, nil, err
+	}
+
+	return psiUser, psiUserColData, nil
 }

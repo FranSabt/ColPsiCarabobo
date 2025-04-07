@@ -29,8 +29,16 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 		return psi_user_admin_presenter.UploadCsv(c, db)
 	})
 
+	// TODO: minimisar la cantidad de informacion enviada en la respuesta
+	group.Get("/psi-user", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.AdminGetPsiUserList(c, db)
+	})
+
 	group.Post("/psi-user", func(c *fiber.Ctx) error {
 		return psi_user_admin_presenter.AdminCreatePsiUser(c, db)
 	})
 
+	group.Post("/psi-user-by-id", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.GetPsiUsersByID(c, db)
+	})
 }
