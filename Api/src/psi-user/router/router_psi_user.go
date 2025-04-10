@@ -41,4 +41,8 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 	group.Post("/psi-user-by-id", func(c *fiber.Ctx) error {
 		return psi_user_admin_presenter.GetPsiUsersByID(c, db)
 	})
+
+	group.Patch("/psi-user-by-id", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.PatchPsiUserByID(c, db)
+	})
 }

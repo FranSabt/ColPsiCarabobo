@@ -3,6 +3,7 @@ package psi_user_admin_presenter
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"unicode"
 
@@ -275,6 +276,82 @@ func GetPsiUsersByID(c *fiber.Ctx, db *gorm.DB) error {
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 
+func PatchPsiUserByID(c *fiber.Ctx, db *gorm.DB) error {
+	var request psi_user_request.PsiUserUpdateRequest
+
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Cuerpo de solicitud inválido",
+			"details": err.Error(),
+		})
+	}
+
+	if !hasFieldsToUpdate(request) {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Se requiere al menos un campo adicional al ID para actualizar",
+		})
+	}
+
+	id, err := uuid.Parse(request.ID)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Not valid id",
+			"error":   err.Error(),
+		})
+	}
+
+	psi_user, psi_user_col_data, err := psi_user_db.GetPsiUserByIdDetails(db, id)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error while trying to retrieve the PsiUser",
+			"error":   err.Error(),
+		})
+	}
+
+	err = psi_user_controller.UpdatePsiUserModelFields(psi_user, &request)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error while trying to update the PsiUser",
+			"error":   err.Error(),
+		})
+	}
+
+	err = psi_user_controller.UpdatePsiUserColDataFields(psi_user_col_data, &request)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error while trying to update the PsiUser",
+			"error":   err.Error(),
+		})
+	}
+
+	err = psi_user_db.SaveUpdatedPsiUser(db, psi_user, psi_user_col_data)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Error while trying to update the PsiUse in DBr",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"success":           true,
+		"message":           "user updated",
+		"psi_user":          psi_user,
+		"psi_user_col_data": psi_user_col_data,
+	})
+
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
 // 	FUNCIONES AUXILIARES //
 
 ////////////////////////////////////////////
@@ -306,4 +383,31 @@ func isValidName(s string) bool {
 	}
 
 	return true
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+func hasFieldsToUpdate(request psi_user_request.PsiUserUpdateRequest) bool {
+	// Usamos reflect para verificar dinámicamente todos los campos
+	v := reflect.ValueOf(request)
+	typeOfS := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		fieldName := typeOfS.Field(i).Name
+		fieldValue := v.Field(i).Interface()
+
+		// Saltamos el campo ID
+		if fieldName == "ID" {
+			continue
+		}
+
+		// Verificamos si el campo es un puntero y no es nil
+		if reflect.ValueOf(fieldValue).Kind() == reflect.Ptr && !reflect.ValueOf(fieldValue).IsNil() {
+			return true
+		}
+	}
+
+	return false
 }

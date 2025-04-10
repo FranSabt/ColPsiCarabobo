@@ -156,3 +156,28 @@ func GetPsiUserByIdDetails(db *gorm.DB, id uuid.UUID) (*models.PsiUserModel, *mo
 
 	return psiUser, psiUserColData, nil
 }
+
+func SaveUpdatedPsiUser(db *gorm.DB, psiUser *models.PsiUserModel, colData *models.PsiUserColData) error {
+	// Iniciar transacción
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Guardar PsiUserModel
+	if err := tx.Save(psiUser).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Guardar PsiUserColData
+	if err := tx.Save(colData).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Commit si todo fue bien
+	return tx.Commit().Error
+}
