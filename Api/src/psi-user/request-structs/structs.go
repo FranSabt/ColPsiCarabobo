@@ -22,15 +22,15 @@ type PsiUserCreateRequest struct {
 
 	// Address Information
 	// Carabobo Address
-	MunicipalityCarabobo string `json:"municipalityCarabobo" validate:"required"`
-	PhoneCarabobo        string `json:"phoneCarabobo" validate:"required"`
-	CelPhoneCarabobo     string `json:"celPhoneCarabobo" validate:"required"`
+	MunicipalityCarabobo string `json:"municipalityCarabobo"`
+	PhoneCarabobo        string `json:"phoneCarabobo"`
+	CelPhoneCarabobo     string `json:"celPhoneCarabobo"`
 
 	// Outside Carabobo Address
-	StateOutside                string `json:"stateOutside" validate:"required"`
-	MunicipalityOutSideCarabobo string `json:"municipalityOutSideCarabobo" validate:"required"`
-	PhoneOutSideCarabobo        string `json:"phoneOutSideCarabobo" validate:"required"`
-	CelPhoneOutSideCarabobo     string `json:"celPhoneOutSideCarabobo" validate:"required"`
+	StateOutside                string `json:"stateOutside"`
+	MunicipalityOutSideCarabobo string `json:"municipalityOutSideCarabobo"`
+	PhoneOutSideCarabobo        string `json:"phoneOutSideCarabobo"`
+	CelPhoneOutSideCarabobo     string `json:"celPhoneOutSideCarabobo"`
 
 	// Education Information
 	UniversityUndergraduate string `json:"universityUndergraduate" validate:"required"`

@@ -13,7 +13,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=mydatabase
-      - DB_PORT=5432
+      - DB_PORT=5433
     networks:
       - mynetwork
 
@@ -21,7 +21,7 @@ services:
   db:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
