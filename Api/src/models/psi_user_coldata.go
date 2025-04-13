@@ -10,9 +10,12 @@ type PsiUserColData struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 
 	// Undergraduate Data
-	UniversityUndergraduate string    `gorm:"size:255"`
-	GraduateDate            time.Time `gorm:"type:date"` // Usar time.Time para fechas
-	MentionUndergraduate    string    `gorm:"size:255"`
+	UniversityUndergraduate     string    `gorm:"size:255"`
+	ShowUniversityUndergraduate bool      `gorm:"default:false"`
+	GraduateDate                time.Time `gorm:"type:date"` // Usar time.Time para fechas
+	ShowGraduateDate            bool      `gorm:"default:false"`
+	MentionUndergraduate        string    `gorm:"size:255"`
+	ShowMentionUndergraduate    bool      `gorm:"default:false"`
 
 	// Undergraduate Data Title Register
 	RegisterTitleState string    `gorm:"size:255"` // Puedes usar un enum si lo defines
