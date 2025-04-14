@@ -181,3 +181,15 @@ func SaveUpdatedPsiUser(db *gorm.DB, psiUser *models.PsiUserModel, colData *mode
 	// Commit si todo fue bien
 	return tx.Commit().Error
 }
+
+func GetPsiUserByUsernameOrEmal(db *gorm.DB, username, query string) (*models.PsiUserModel, error) {
+	var psi_user models.PsiUserModel
+	err := db.Where(query, username).First(&psi_user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &psi_user, nil
+}

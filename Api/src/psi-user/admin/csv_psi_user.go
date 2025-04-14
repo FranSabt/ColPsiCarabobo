@@ -139,9 +139,9 @@ func AdminCreatePsiUser(c *fiber.Ctx, db *gorm.DB) error {
 	// ------- Create User in DB ------- //
 	psi_user, psi_user_col_data, err := psi_user_controller.CreateNewPsiUser(db, request)
 	if err != nil {
-		return c.Status(http.StatusCreated).JSON(fiber.Map{
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Error ehile creatin the new USer",
+			"message": "Error while creating the new User",
 			"details": err.Error(),
 		})
 	}

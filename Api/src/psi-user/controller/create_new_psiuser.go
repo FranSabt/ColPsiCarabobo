@@ -1,8 +1,10 @@
 package psi_user_controller
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -10,7 +12,7 @@ import (
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	psi_user_request "github.com/FranSabt/ColPsiCarabobo/src/psi-user/request-structs"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/argon2"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +21,7 @@ func CreateNewPsiUser(db *gorm.DB, request psi_user_request.PsiUserCreateRequest
 	// create the psi user
 	psi_user, err := createPsiuserModel(request)
 	if err != nil {
+		fmt.Printf("%v\n", err)
 		return nil, nil, err
 	}
 
@@ -62,15 +65,17 @@ func createPsiuserModel(request psi_user_request.PsiUserCreateRequest) (*models.
 	// Parsear fecha de nacimiento
 	bornDate, err := ParseDateString(request.BornDate)
 	if err != nil {
-		return nil, fmt.Errorf("invalid birth date: %v", err)
+		return nil, fmt.Errorf("invalid birth date: %v\n", err)
 	}
 
 	// Generar contraseña aleatoria segura y su hash
 	password := generateRandomPassword(12) // Longitud de 12 caracteres
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
-		return nil, fmt.Errorf("could not hash password: %v", err)
+		return nil, fmt.Errorf("could not hash password: %v\n", err)
 	}
+
+	fmt.Printf("Password =>  %v\n", password)
 
 	// Generar nuevo UUID para el usuario
 	user_id := uuid.New()
@@ -134,11 +139,24 @@ func generateRandomPassword(length int) string {
 
 // Función para hashear la contraseña
 func hashPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+	const saltLength = 16
+	const keyLength = 32
+
+	// Generar salt
+	salt := make([]byte, saltLength)
+	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	return string(hashedPassword), nil
+
+	// Generar hash usando argon2 y el salt generado
+	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, keyLength)
+
+	// Combinar salt y hash, y codificarlos en base64
+	hashSalt := append(salt, hash...)
+	encoded := base64.RawStdEncoding.EncodeToString(hashSalt)
+
+	log.Printf("Pass: %v\nHash generado: %v", password, encoded) // Log para depuración
+	return encoded, nil
 }
 
 ///////////////////////////////////////////////

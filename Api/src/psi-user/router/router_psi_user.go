@@ -12,11 +12,25 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 		return c.SendString("Psi User")
 	})
 
+	//* ---- PUBLIC ROUTES ---- *//
 	// get all /public
 	group.Get("/get-all", func(c *fiber.Ctx) error {
 		return psiuser_presenter.GetPsiUsers(c, db)
 	})
 	// get details /public
+	group.Post("/get-by-id", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetPsiUserById(c, db)
+	})
+
+	//* ---- PRIVATE ROUTES ---- *//
+	// Login
+	group.Post("/login", func(c *fiber.Ctx) error {
+		return psiuser_presenter.PsiUserLogin(c, db)
+
+	})
+	// Get My info
+	// Update my info
+	// Update Profile Pic
 
 	// get details self
 	// update self
