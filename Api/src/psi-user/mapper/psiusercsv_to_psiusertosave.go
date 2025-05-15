@@ -7,6 +7,7 @@ import (
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
 	psi_user_controller "github.com/FranSabt/ColPsiCarabobo/src/psi-user/controller"
+	"github.com/FranSabt/ColPsiCarabobo/src/utils"
 
 	"github.com/google/uuid"
 )
@@ -24,13 +25,14 @@ func PsiUserCsv_To_PsiUserModel(csv psi_user_controller.PsiUserCsv) models.PsiUs
 	}
 
 	bornDate, _ := time.Parse("2006-01-02", csv.BornDate) // Asume que la fecha está en formato YYYY-MM-DD
+	hash, _ := utils.HashPassword("123456")
 
 	// Crear y devolver el modelo
 	return models.PsiUserModel{
 		ID:                          uuid.New(), // Generar un nuevo UUID
 		Username:                    csv.UserName,
 		Email:                       csv.Email,
-		Password:                    csv.Password,
+		Password:                    hash, //csv.Password,
 		FirstName:                   csv.FirstName,
 		SecondName:                  csv.SecondName,
 		LastName:                    csv.LastName,

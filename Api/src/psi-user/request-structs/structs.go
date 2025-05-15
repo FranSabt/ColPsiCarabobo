@@ -114,3 +114,32 @@ type PsiUserUpdateRequest struct {
 	DoubleGuild        *bool   `json:"double_guild,omitempty"`
 	CPSM               *bool   `json:"cpsm,omitempty"`
 }
+
+type PsiUserUpdateRequestSelf struct {
+	ID           string  `json:"id" validate:"required"`
+	Username     *string `json:"username,omitempty"`
+	Email        *string `json:"email,omitempty"`
+	Password     string  `json:"password" validate:"required"`
+	NewPassword1 *string `json:"new_password1,omitempty"`
+	NewPassword2 *string `json:"new_password2,omitempty"`
+
+	// Contact Information
+	ContactEmail       *string `json:"contact_email,omitempty"`
+	ShowContacEmail    *bool   `json:"show_contact_email,omitempty"`
+	PublicPhone        *string `json:"public_phone,omitempty"`
+	ShowPublicPhone    *bool   `json:"show_public_phone,omitempty"`
+	ServiceAddress     *string `json:"service_address,omitempty"`
+	ShowServiceAddress *bool   `json:"show_service_address,omitempty"`
+
+	// Address Information
+	// Carabobo Address
+	MunicipalityCarabobo *string `json:"municipality_carabobo,omitempty"`
+	PhoneCarabobo        *string `json:"phone_carabobo,omitempty"`
+	CelPhoneCarabobo     *string `json:"cel_phone_carabobo,omitempty"`
+
+	// Outside Carabobo Address
+	StateOutside                *string `json:"state_outside,omitempty"`
+	MunicipalityOutSideCarabobo *string `json:"municipality_out_side_carabobo,omitempty"`
+	PhoneOutSideCarabobo        *string `json:"phone_out_side_carabobo,omitempty"`
+	CelPhoneOutSideCarabobo     *string `json:"cel_phone_out_side_carabobo,omitempty"`
+}

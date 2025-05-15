@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # Servicio para la aplicación en Go
   app:
@@ -13,7 +15,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=mydatabase
-      - DB_PORT=5633
+      - DB_PORT=5432
+      - DB_TIMEZONE=America/Caracas
+      - DEVELOPMENT=false
+      - AUTOMIGRATE=false
     networks:
       - mynetwork
 
@@ -26,9 +31,27 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mydatabase
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db_init:/docker-entrypoint-initdb.d # Aquí se montan los scripts SQL
+      - ./db_init:/docker-entrypoint-initdb.d
+    networks:
+      - mynetwork
+
+  # Servicio para pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
     networks:
       - mynetwork
 

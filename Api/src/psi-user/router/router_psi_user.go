@@ -28,6 +28,10 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 		return psiuser_presenter.PsiUserLogin(c, db)
 
 	})
+	group.Get("/psi-user", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetPsiUserSelfInfo(c, db)
+
+	})
 	// Get My info
 	// Update my info
 	// Update Profile Pic

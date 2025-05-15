@@ -65,7 +65,7 @@ func PsiUserLogin(c *fiber.Ctx, db *gorm.DB) error {
 		log.Printf("Failed login attempt for user: %s", psiUser.Username)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"success": false,
-			"error":   "Invalid credentials",
+			"error":   "Invalid credentials2",
 		})
 	}
 

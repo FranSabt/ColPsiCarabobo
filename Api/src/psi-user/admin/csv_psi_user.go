@@ -54,43 +54,47 @@ func UploadCsv(c *fiber.Ctx, db *gorm.DB) error {
 	//TODO: levar a una funcion aparte y generar la entrada con hilos idependientes
 	// Procesar cada registro del CSV
 	for _, r := range *result {
-		// Mapear los datos a los modelos
-		psi_model_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserModel(r)
+		err := db.Transaction(func(tx *gorm.DB) error {
+			// Mapear a los modelos
+			psi_model_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserModel(r)
 
-		// Intentar guardar el PsiUserModel
-		err = psi_user_db.CreatePsiUseDb(db, psi_model_mapped)
+			// Crear PsiUserModel
+			if err := psi_user_db.CreatePsiUseDb(tx, psi_model_mapped); err != nil {
+				return fmt.Errorf("error al crear PsiUserModel: %w", err)
+			}
+
+			// Mapear y crear PsiUserColData
+			psi_col_data_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserColData(r)
+			psi_col_data_mapped.PsiUserModelID = psi_model_mapped.ID
+
+			if err := psi_user_db.CreatePsiColDataDb(tx, psi_col_data_mapped); err != nil {
+				return fmt.Errorf("error al crear PsiUserColData: %w", err)
+			}
+
+			// Actualizar PsiUserModel con el ID de ColData
+			err := tx.Model(&psi_model_mapped).
+				Update("psi_user_col_data_id", psi_col_data_mapped.ID).Error
+			if err != nil {
+				return fmt.Errorf("error al actualizar PsiUserModel con PsiUserColDataID: %w", err)
+			}
+
+			// Todo salió bien
+			return nil
+		})
+
+		// Si algo falló, agregamos a los fallidos
 		if err != nil {
-			// Si falla, añadir el registro fallido a la lista de fallos
 			fail = append(fail, struct {
 				Record interface{}
 				Error  string
 			}{
 				Record: r,
-				Error:  "Error al crear PsiUserModel: " + err.Error(),
+				Error:  err.Error(),
 			})
-			continue // Saltar al siguiente registro
+			continue
 		}
 
-		// se reliza este proceso despues de que el registro del psiuser es exitoso
-		psi_col_data_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserColData(r)
-		// Asignar el ID del PsiUserModel al PsiUserColData
-		psi_col_data_mapped.PsiUserModelID = psi_model_mapped.ID
-
-		// Intentar guardar el PsiUserColData
-		err = psi_user_db.CreatePsiColDataDb(db, psi_col_data_mapped)
-		if err != nil {
-			// Si falla, añadir el registro fallido a la lista de fallos
-			fail = append(fail, struct {
-				Record interface{}
-				Error  string
-			}{
-				Record: r,
-				Error:  "Error al crear PsiUserColData: " + err.Error(),
-			})
-			continue // Saltar al siguiente registro
-		}
-
-		count++ // Incrementar el contador de registros exitosos
+		count++
 	}
 
 	// Devolver una respuesta exitosa
