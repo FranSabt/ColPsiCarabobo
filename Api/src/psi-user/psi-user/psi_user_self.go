@@ -5,6 +5,7 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/FranSabt/ColPsiCarabobo/src/models"
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	psi_user_request "github.com/FranSabt/ColPsiCarabobo/src/psi-user/request-structs"
 	"github.com/FranSabt/ColPsiCarabobo/src/utils"
@@ -86,17 +87,17 @@ func UpdatePsiUserSelfInfo(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	psiuser_model, psiuser_data, err := psi_user_db.GetPsiUserByIdDetails(db, uuid_pased)
+	psiuser_model, err := psi_user_db.GetPsiUserById(db, uuid_pased)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
 		})
 	}
-	if psiuser_model != nil || psiuser_data != nil {
+	if psiuser_model == nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"error":   "user or data dont exist",
+			"error":   "user or do not exist",
 		})
 	}
 
@@ -109,7 +110,18 @@ func UpdatePsiUserSelfInfo(c *fiber.Ctx, db *gorm.DB) error {
 			"error":   "Invalid credentials2",
 		})
 	}
-	// ------ Ajustar modelos ------ //
+	// ------ Ajustar modelo ------ //
+	model_updated := modifiPsiUSerModel(psiuser_model, request)
+
+	// ------ Update ----- //
+	err = psi_user_db.SaveUpdatedPsiUserOnly(db, model_updated)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+
+	}
 
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
 		"success": true,
@@ -117,6 +129,10 @@ func UpdatePsiUserSelfInfo(c *fiber.Ctx, db *gorm.DB) error {
 	})
 
 }
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
 
 func checkUpdateselfField(psi_user psi_user_request.PsiUserUpdateRequestSelf) (bool, error) {
 	can_pass := false
@@ -180,4 +196,93 @@ func checkUpdateselfField(psi_user psi_user_request.PsiUserUpdateRequestSelf) (b
 	}
 
 	return true, nil
+}
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+
+func modifiPsiUSerModel(
+	psiuser_model *models.PsiUserModel,
+	psi_user_request psi_user_request.PsiUserUpdateRequestSelf,
+) *models.PsiUserModel {
+
+	// ---- Campos de PsiUser ---- //
+	//
+	if psi_user_request.Username != nil {
+		psiuser_model.Username = *psi_user_request.Username
+	}
+
+	if psi_user_request.Email != nil {
+		psiuser_model.Email = *psi_user_request.Email
+	}
+
+	if psi_user_request.NewPassword1 != nil {
+
+		if psi_user_request.NewPassword1 == psi_user_request.NewPassword2 {
+			hash, err := utils.HashPassword(*psi_user_request.NewPassword1)
+
+			if err == nil {
+				psiuser_model.Password = hash
+			}
+
+		}
+	}
+
+	// Contact Information
+	if psi_user_request.ContactEmail != nil {
+		psiuser_model.ContactEmail = *psi_user_request.ContactEmail
+	}
+
+	if psi_user_request.ShowContacEmail != nil {
+		psiuser_model.ShowContactEmail = *psi_user_request.ShowContacEmail
+	}
+
+	if psi_user_request.PublicPhone != nil {
+		psiuser_model.PublicPhone = *psi_user_request.PublicPhone
+	}
+
+	if psi_user_request.ShowPublicPhone != nil {
+		psiuser_model.ShowPublicPhone = *psi_user_request.ShowPublicPhone
+	}
+
+	if psi_user_request.ServiceAddress != nil {
+		psiuser_model.ServiceAddress = *psi_user_request.ServiceAddress
+	}
+
+	if psi_user_request.ShowServiceAddress != nil {
+		psiuser_model.ShowPublicServiceAddress = *psi_user_request.ShowServiceAddress
+	}
+
+	// Address Information
+	if psi_user_request.MunicipalityCarabobo != nil {
+		psiuser_model.MunicipalityCarabobo = *psi_user_request.MunicipalityCarabobo
+	}
+
+	if psi_user_request.PhoneCarabobo != nil {
+		psiuser_model.PhoneCarabobo = *psi_user_request.PhoneCarabobo
+	}
+
+	if psi_user_request.CelPhoneCarabobo != nil {
+		psiuser_model.CelPhoneCarabobo = *psi_user_request.CelPhoneCarabobo
+	}
+
+	// Outside Carabobo Address
+	if psi_user_request.StateOutside != nil {
+		psiuser_model.StateOutside = *psi_user_request.StateOutside
+	}
+
+	if psi_user_request.MunicipalityOutSideCarabobo != nil {
+		psiuser_model.MunicipalityOutSideCarabobo = *psi_user_request.MunicipalityOutSideCarabobo
+	}
+
+	if psi_user_request.PhoneOutSideCarabobo != nil {
+		psiuser_model.PhoneOutSideCarabobo = *psi_user_request.PhoneOutSideCarabobo
+	}
+
+	if psi_user_request.CelPhoneOutSideCarabobo != nil {
+		psiuser_model.CelPhoneOutSideCarabobo = *psi_user_request.CelPhoneOutSideCarabobo
+	}
+
+	return psiuser_model
 }

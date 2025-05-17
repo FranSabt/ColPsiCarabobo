@@ -135,6 +135,19 @@ func SearchPsiUsersByQuery(db *gorm.DB, baseQuery, countQuery *gorm.DB, pageNum,
 	return users, total, nil
 }
 
+func GetPsiUserById(db *gorm.DB, id uuid.UUID) (*models.PsiUserModel, error) {
+	psiUser := &models.PsiUserModel{}
+	err := db.Where("id = ?", id).First(psiUser).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("psi_user record not found")
+		}
+		return nil, err
+	}
+
+	return psiUser, nil
+}
+
 func GetPsiUserByIdDetails(db *gorm.DB, id uuid.UUID) (*models.PsiUserModel, *models.PsiUserColData, error) {
 	psiUser := &models.PsiUserModel{}
 	err := db.Where("id = ?", id).First(psiUser).Error
@@ -155,6 +168,25 @@ func GetPsiUserByIdDetails(db *gorm.DB, id uuid.UUID) (*models.PsiUserModel, *mo
 	}
 
 	return psiUser, psiUserColData, nil
+}
+
+func SaveUpdatedPsiUserOnly(db *gorm.DB, psiUser *models.PsiUserModel) error {
+	// Iniciar transacción
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Guardar PsiUserModel
+	if err := tx.Save(psiUser).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Commit si todo fue bien
+	return tx.Commit().Error
 }
 
 func SaveUpdatedPsiUser(db *gorm.DB, psiUser *models.PsiUserModel, colData *models.PsiUserColData) error {

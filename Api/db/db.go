@@ -25,6 +25,8 @@ func Connect() (*gorm.DB, error) {
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
 	timezone := os.Getenv("DB_TIMEZONE")
+	automigrate := os.Getenv("AUTOMIGRATE")
+	development := os.Getenv("DEVELOPMENT")
 
 	// Crear el DSN (Data Source Name)
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
@@ -49,7 +51,9 @@ func Connect() (*gorm.DB, error) {
 	db.Logger = logger.Default.LogMode(logger.Info)
 	log.Println("running migrations")
 
-	AutoMigrateDB(db)
+	if development == "true" && automigrate == "true" {
+		AutoMigrateDB(db)
+	}
 
 	// Configurar los parámetros de la conexión, como máximo número de conexiones abiertas, etc.
 	sqlDB.SetMaxOpenConns(25)
