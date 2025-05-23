@@ -67,7 +67,7 @@ func UpdatePsiUserSelfInfo(c *fiber.Ctx, db *gorm.DB) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success":       false,
-			"error":         "No field to update",
+			"error":         "Error in format to update",
 			"error_message": err.Error(),
 		})
 	}

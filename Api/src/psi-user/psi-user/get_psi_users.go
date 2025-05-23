@@ -101,7 +101,7 @@ func GetPsiUserById(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"success": true,
 		"message": "Psichologyst found",
 		"data":    psi_user_public,

@@ -1,0 +1,1 @@
+- Crear un struct para las BD

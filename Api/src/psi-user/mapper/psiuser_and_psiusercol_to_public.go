@@ -36,14 +36,16 @@ func PsiUserDataToPublic(psi_user *models.PsiUserModel, col_data *models.PsiUser
 	is_solvent := psi_user.Solvent
 
 	psi_user_public := PsiUserPublicData{
-		FirstName:               psi_user.FirstName,
-		SecondName:              psi_user.SecondName,
-		LastName:                psi_user.SecondLastName,
-		FPV:                     psi_user.FPV,
-		CI:                      psi_user.CI,
-		Nationality:             psi_user.Nationality,
-		BornDate:                psi_user.BornDate.String(),
-		Genre:                   psi_user.Genre,
+		ID:          psi_user.ID,
+		FirstName:   psi_user.FirstName,
+		SecondName:  psi_user.SecondName,
+		LastName:    psi_user.SecondLastName,
+		FPV:         psi_user.FPV,
+		CI:          psi_user.CI,
+		Nationality: psi_user.Nationality,
+		BornDate:    psi_user.BornDate.String(),
+		Genre:       psi_user.Genre,
+		/* --- No puede publicitarse si no esta solvente --- */
 		ContactEmail:            isContactEmail(is_solvent, psi_user.ShowContactEmail, psi_user.Email),
 		PublicPhone:             isPublicPhone(is_solvent, psi_user.ShowPublicPhone, psi_user.PublicPhone),
 		ServiceAddress:          isServiceAddress(is_solvent, psi_user.ShowPublicServiceAddress, psi_user.ServiceAddress),

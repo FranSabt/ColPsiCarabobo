@@ -26,15 +26,19 @@ func PsiUserRouter(group fiber.Router, db *gorm.DB) {
 	// Login
 	group.Post("/login", func(c *fiber.Ctx) error {
 		return psiuser_presenter.PsiUserLogin(c, db)
-
 	})
 	// Get My info
 	group.Get("/psi-user", func(c *fiber.Ctx) error {
 		return psiuser_presenter.GetPsiUserSelfInfo(c, db)
-
 	})
 	// Update my info
+	group.Put("/psi-user", func(c *fiber.Ctx) error {
+		return psiuser_presenter.UpdatePsiUserSelfInfo(c, db)
+	})
 	// Update Profile Pic
+	group.Put("/psi-user/user-pic", func(c *fiber.Ctx) error {
+		return psiuser_presenter.CreatePsiUserImage(c, db)
+	})
 
 	// get details self
 	// update self

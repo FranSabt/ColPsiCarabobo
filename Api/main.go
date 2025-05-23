@@ -26,9 +26,16 @@ func main() {
 	}
 	log.Println("Successfully connected to the database!")
 
+	// Conectar a la base de datos
+	_, err = db.ConnectImage()
+	if err != nil {
+		log.Fatalf("Could not connect to the images database: %v", err)
+	}
+	log.Println("Successfully connected to the images database!")
+
 	// Root route
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, Aguas!")
+		return c.SendString("Hello, ColPsiCarabobo!")
 	})
 
 	// Register routes from the router package

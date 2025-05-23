@@ -1,28 +1,6 @@
 version: '3.8'
 
 services:
-  # Servicio para la aplicación en Go
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=mydatabase
-      - DB_PORT=5432
-      - DB_TIMEZONE=America/Caracas
-      - DEVELOPMENT=false
-      - AUTOMIGRATE=false
-    networks:
-      - mynetwork
-
-  # Servicio para la base de datos PostgreSQL
   db:
     image: postgres:16-alpine
     ports:
@@ -42,7 +20,54 @@ services:
     networks:
       - mynetwork
 
-  # Servicio para pgAdmin
+  db_images:
+    image: postgres:16-alpine
+    ports:
+      - "5634:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: images_database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - images_postgres_data:/var/lib/postgresql/data
+      - ./db_images_init:/docker-entrypoint-initdb.d
+    networks:
+      - mynetwork
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - db_images
+    environment:
+      # DB DATA
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=mydatabase
+      - DB_PORT=5432
+      - DB_TIMEZONE=America/Caracas
+      # DB IMAGENES
+      - DB_HOST_IMAGE=db_images
+      - DB_USER_IMAGE=postgres
+      - DB_PASSWORD_IMAGE=postgres
+      - DB_NAME_IMAGE=images_database
+      - DB_PORT_IMAGE=5432
+      - DB_TIMEZONE_IMAGE=America/Caracas
+      - DEVELOPMENT=false
+      - AUTOMIGRATE=false
+    networks:
+      - mynetwork
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -52,13 +77,13 @@ services:
       - "8080:80"
     depends_on:
       - db
+      - db_images
     networks:
       - mynetwork
 
-# Volumen para persistir los datos de PostgreSQL
 volumes:
   postgres_data:
+  images_postgres_data:
 
-# Red para conectar los servicios
 networks:
   mynetwork:
