@@ -30,6 +30,8 @@ type PsiUserPublicData struct {
 	UniversityUndergraduate string `json:"university_undergraduate"`
 	GraduateDate            string `json:"graduate_year"` // Usar time.Time para fechas
 	MentionUndergraduate    string `json:"mention_undergraduate"`
+	PrimarySpecialty        string `json:"primary_specialty"`
+	SecondarySpecialty      string `json:"secondary_specialty"`
 }
 
 func PsiUserDataToPublic(psi_user *models.PsiUserModel, col_data *models.PsiUserColData) *PsiUserPublicData {
@@ -52,6 +54,8 @@ func PsiUserDataToPublic(psi_user *models.PsiUserModel, col_data *models.PsiUser
 		UniversityUndergraduate: isUniversityUndergraduate(is_solvent, col_data.ShowUniversityUndergraduate, col_data.UniversityUndergraduate),
 		GraduateDate:            isGraduateDate(is_solvent, col_data.ShowGraduateDate, col_data.GraduateDate),
 		MentionUndergraduate:    isMentionUndergraduate(is_solvent, col_data.ShowMentionUndergraduate, col_data.MentionUndergraduate),
+		PrimarySpecialty:        psi_user.PrimarySpecialty,
+		SecondarySpecialty:      psi_user.SecondarySpecialty,
 	}
 
 	return &psi_user_public

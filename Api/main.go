@@ -27,12 +27,16 @@ func main() {
 	log.Println("Successfully connected to the database!")
 
 	// Conectar a la base de datos
-	_, err = db.ConnectImage()
+	database_image, err := db.ConnectImage()
 	if err != nil {
 		log.Fatalf("Could not connect to the images database: %v", err)
 	}
 	log.Println("Successfully connected to the images database!")
 
+	Db_Conteiner := db.StructDb{
+		Image: database_image,
+		DB:    database,
+	}
 	// Root route
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, ColPsiCarabobo!")
@@ -41,7 +45,7 @@ func main() {
 	// Register routes from the router package
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	router.Router(v1, database)
+	router.Router(v1, Db_Conteiner)
 
 	// Start the server
 	app.Listen(":5000")

@@ -3,29 +3,29 @@ package models
 import "github.com/google/uuid"
 
 type UserAdmin struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Username string    `gorm:"size:25;not null"`
-	Email    string    `gorm:"size:50;not null"`
-	Password string    `gorm:"size:512;not null"`
-	IsActive bool      `gorm:"default:true"` // Por defecto, el admin está activo
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	Username string    `gorm:"size:25;not null" json:"username"`
+	Email    string    `gorm:"size:50;not null" json:"email"`
+	Password string    `gorm:"size:512;not null" json:"password"`
+	IsActive bool      `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 
 	// Permisos sobre administradores
-	CanCreateAdmin bool `gorm:"default:false"`
-	CanUpdateAdmin bool `gorm:"default:false"`
-	CanDeleteAdmin bool `gorm:"default:false"`
+	CanCreateAdmin bool `gorm:"default:false" json:"can_create_admin"`
+	CanUpdateAdmin bool `gorm:"default:false" json:"can_update_admin"`
+	CanDeleteAdmin bool `gorm:"default:false" json:"can_delete_admin"`
 
 	// Permisos sobre publicaciones
-	CanPublish       bool `gorm:"default:false"`
-	CanUpdatePublish bool `gorm:"default:false"`
-	CanDeletePublish bool `gorm:"default:false"`
+	CanPublish       bool `gorm:"default:false" json:"can_publish"`
+	CanUpdatePublish bool `gorm:"default:false" json:"can_update_publish"`
+	CanDeletePublish bool `gorm:"default:false" json:"can_delete_publish"`
 
 	// Permisos de notificaciones
-	CanSendNotifications   bool `gorm:"default:false"` // Puede enviar notificaciones
-	CanManageNotifications bool `gorm:"default:false"` // Puede gestionar notificaciones (editar/eliminar)
-	CanReadNotifications   bool `gorm:"default:false"` // Puede leer notificaciones
+	CanSendNotifications   bool `gorm:"default:false" json:"can_send_notifications"`   // Puede enviar notificaciones
+	CanManageNotifications bool `gorm:"default:false" json:"can_manage_notifications"` // Puede gestionar notificaciones (editar/eliminar)
+	CanReadNotifications   bool `gorm:"default:false" json:"can_read_notifications"`   // Puede leer notificaciones
 
 	// Permisos para crear etiquetas
-	CanCreateTags bool `gorm:"default:false"` // Puede crear etiquetas
-	CanEditTags   bool `gorm:"default:false"` // Puede editar etiquetas
-	CanDeleteTags bool `gorm:"default:false"` // Puede eliminar etiquetas
+	CanCreateTags bool `gorm:"default:false" json:"can_create_tags"` // Puede crear etiquetas
+	CanEditTags   bool `gorm:"default:false" json:"can_edit_tags"`   // Puede editar etiquetas
+	CanDeleteTags bool `gorm:"default:false" json:"can_delete_tags"` // Puede eliminar etiquetas
 }

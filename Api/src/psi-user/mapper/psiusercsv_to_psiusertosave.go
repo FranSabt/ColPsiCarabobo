@@ -58,6 +58,8 @@ func PsiUserCsv_To_PsiUserModel(csv psi_user_controller.PsiUserCsv) models.PsiUs
 		PhoneOutSideCarabobo:        csv.PhoneOutSideCarabobo,
 		CelPhoneOutSideCarabobo:     csv.CelPhoneOutSideCarabobo,
 		PsiUserColDataID:            nil, // Valor por defecto
+		PrimarySpecialty:            "",
+		SecondarySpecialty:          "",
 	}
 }
 

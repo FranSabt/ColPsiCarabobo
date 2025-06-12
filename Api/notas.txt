@@ -1,1 +1,5 @@
 - Crear un struct para las BD
+
+1 - endpoint para obtener array de id de fotos de un usuario
+2 - modificar el endpoint http://localhost:5000/api/v1/psi-user/psi-user/user-pic?id=<id> para que obtenga las imagenes en base a id
+3 - Cambiar el tamaño de las imagenes

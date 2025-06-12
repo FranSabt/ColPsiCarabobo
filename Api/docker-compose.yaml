@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -35,7 +33,8 @@ services:
       retries: 5
     volumes:
       - images_postgres_data:/var/lib/postgresql/data
-      - ./db_images_init:/docker-entrypoint-initdb.d
+      # Usar el mismo directorio de inicialización que db
+      - ./db_init:/docker-entrypoint-initdb.d
     networks:
       - mynetwork
 
@@ -63,8 +62,10 @@ services:
       - DB_NAME_IMAGE=images_database
       - DB_PORT_IMAGE=5432
       - DB_TIMEZONE_IMAGE=America/Caracas
-      - DEVELOPMENT=false
-      - AUTOMIGRATE=false
+      - DEVELOPMENT=true
+      - AUTOMIGRATE=true
+      # - DEVELOPMENT=true
+      # - AUTOMIGRATE=true
     networks:
       - mynetwork
 

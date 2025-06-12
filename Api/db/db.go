@@ -11,6 +11,11 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+type StructDb struct {
+	Image *gorm.DB
+	DB    *gorm.DB
+}
+
 type Dbinstance struct {
 	Db *gorm.DB
 }
@@ -81,6 +86,14 @@ func AutoMigrateDB(db *gorm.DB) error {
 	db.Migrator().DropTable(&models.PsiUserColData{})
 
 	err = db.AutoMigrate(&models.PsiUserColData{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
+
+	db.Migrator().DropTable("psi_specialties")
+	db.Migrator().DropTable(&models.PsiSpecialties{})
+
+	err = db.AutoMigrate(&models.PsiSpecialties{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
