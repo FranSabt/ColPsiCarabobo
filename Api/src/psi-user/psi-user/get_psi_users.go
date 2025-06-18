@@ -11,33 +11,50 @@ import (
 )
 
 func GetPsiUsers(c *fiber.Ctx, db *gorm.DB) error {
-	// Obtener los parámetros de paginación de la consulta
-	page := c.QueryInt("page", 1)          // Página actual (por defecto 1)
-	pageSize := c.QueryInt("pageSize", 10) // Tamaño de la página (por defecto 10)
+	// --- PARÁMETROS DE PAGINACIÓN ---
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("pageSize", 10)
 
-	// Obtener los parámetros de búsqueda (opcionales)
+	// --- PARÁMETROS DE BÚSQUEDA ---
+
+	// Parámetros numéricos (se mantienen como estaban)
 	var ci *int
 	if c.Query("ci") != "" {
 		ciValue := c.QueryInt("ci")
 		ci = &ciValue
 	}
-
 	var fpv *int
 	if c.Query("fpv") != "" {
 		fpvValue := c.QueryInt("fpv")
 		fpv = &fpvValue
 	}
 
-	// Obtener los registros paginados con los filtros aplicados
-	psiUsers, totalRecords, err := psi_user_db.GetPaginatedPsiUsers(db, page, pageSize, ci, fpv)
+	// Nuevos parámetros de texto
+	name := c.Query("name")
+	location := c.Query("location")
+	specialty := c.Query("specialty")
+
+	// --- LLAMADA AL SERVICIO DE BASE DE DATOS ---
+	// Pasamos todos los parámetros a la función de búsqueda
+	psiUsers, totalRecords, err := psi_user_db.GetPaginatedPsiUsers(
+		db,
+		page,
+		pageSize,
+		ci,
+		fpv,
+		name,
+		location,
+		specialty,
+	)
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "Error al obtener los registros",
+			"error":   "Error al obtener los psicólogos",
 			"details": err.Error(),
 		})
 	}
 
-	// Devolver la respuesta con los registros y la información de paginación
+	// --- RESPUESTA ---
 	return c.JSON(fiber.Map{
 		"data":         psiUsers,
 		"totalRecords": totalRecords,

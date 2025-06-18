@@ -66,31 +66,60 @@ type PsiUserResponse struct {
 	Nationality string `json:"nationality"`
 }
 
-func GetPaginatedPsiUsers(db *gorm.DB, page int, pageSize int, ci *int, fpv *int) ([]PsiUserResponse, int64, error) {
+func GetPaginatedPsiUsers(db *gorm.DB, page, pageSize int, ci *int, fpv *int, name, location, specialty string) ([]PsiUserResponse, int64, error) {
 	var psiUsers []PsiUserResponse
 	var totalRecords int64
 
-	// Calcular el offset para la paginación
 	offset := (page - 1) * pageSize
 
-	// Crear la consulta base
+	// Crear la consulta base. Concatenamos nombres para el campo 'name'.
+	// NOTA: La sintaxis de concatenación puede variar entre DBs. '||' es para PostgreSQL/SQLite. Para MySQL usa CONCAT().
 	query := db.Model(&models.PsiUserModel{}).
 		Select("id, first_name || ' ' || last_name as name, fpv, ci, nationality")
 
-	// Aplicar filtros si se proporcionan
+	// --- APLICAR FILTROS ---
+
+	// Filtro por CI (Cédula de Identidad)
 	if ci != nil {
 		query = query.Where("ci = ?", *ci)
 	}
+
+	// Filtro por FPV
 	if fpv != nil {
 		query = query.Where("fpv = ?", *fpv)
 	}
 
-	// Contar el total de registros (con los filtros aplicados)
+	// Filtro por Nombre (búsqueda parcial, insensible a mayúsculas)
+	if name != "" {
+		// Busca en el nombre completo concatenado
+		fullNameSearch := "%" + name + "%"
+		query = query.Where("first_name || ' ' || last_name ILIKE ?", fullNameSearch)
+	}
+
+	// Filtro por Ubicación (búsqueda parcial en varios campos)
+	if location != "" {
+		locationSearch := "%" + location + "%"
+		query = query.Where(
+			"service_address ILIKE ? OR municipality_carabobo ILIKE ? OR state_outside ILIKE ? OR municipality_outside_carabobo ILIKE ?",
+			locationSearch, locationSearch, locationSearch, locationSearch,
+		)
+	}
+
+	// Filtro por Especialidad (búsqueda parcial en primaria o secundaria)
+	if specialty != "" {
+		specialtySearch := "%" + specialty + "%"
+		query = query.Where(
+			"primary_specialty ILIKE ? OR secondary_specialty ILIKE ?",
+			specialtySearch, specialtySearch,
+		)
+	}
+
+	// Contar el total de registros que coinciden con los filtros (antes de paginar)
 	if err := query.Count(&totalRecords).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Aplicar paginación y obtener los registros
+	// Aplicar paginación y ejecutar la consulta para obtener los registros
 	if err := query.Offset(offset).Limit(pageSize).Find(&psiUsers).Error; err != nil {
 		return nil, 0, err
 	}

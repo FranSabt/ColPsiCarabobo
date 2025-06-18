@@ -12,3 +12,6 @@
     - FPV
     - CI
     - Especialidad
+
+
+endpoint admin
