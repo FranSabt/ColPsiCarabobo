@@ -35,6 +35,7 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
+	// TODO: bindear el id
 	fmt.Println(id)
 
 	if len(request.Name) < 4 {
@@ -167,7 +168,99 @@ func GetPsiSpecialtiesDescription(c *fiber.Ctx, db *gorm.DB) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
+func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
+	var request specialties_structs.SpecialtyUpdate
+
+	if err := c.BodyParser(&request); err != nil {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"error":   "Internal server error",
+		})
+	}
+
+	if request.ID <= 0 {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"error":   "No Id to update",
+		})
+	}
+
+	// Verificamos que haya algo que actualizar
+	if request.Description == "" || request.Name == "" {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"error":   "Nothing to update",
+		})
+	}
+
+	admin_id, err := uuid.Parse(request.AdmindId)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	// TODO: bindear el id
+	fmt.Println(admin_id)
+
+	err = specialties_controller.UpdatePsiSpecialtyController(&request, db)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "error updating",
+			"details": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    nil,
+	})
+}
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
+	admin_id := c.Query("admin_id", "")
+	specialty_id := c.QueryInt("specialty_id", 0)
+
+	admin_uuid, err := uuid.Parse(admin_id)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	// TODO: verificar el administrador
+	fmt.Println(admin_uuid)
+
+	err = specialties_controller.DeleteSpecialtyController(int64(specialty_id), db)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "error updating",
+			"details": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"data":    nil,
+	})
+}
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
 // ------       Auxiliary Functions      ------     //
 
+//////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////

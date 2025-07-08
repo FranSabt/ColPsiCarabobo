@@ -2,6 +2,8 @@ package specialties_controller
 
 import (
 	"errors"
+	"regexp"
+
 	// Asegúrate de tener este import si no estaba
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
 	specialties_db "github.com/FranSabt/ColPsiCarabobo/src/specialties/db"
@@ -75,4 +77,96 @@ func GetPsiSpecialtiesDescriptionController(db *gorm.DB, id uint) (string, error
 	}
 
 	return description, nil
+}
+
+// ////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
+
+func UpdatePsiSpecialtyController(request *specialties_structs.SpecialtyUpdate, db *gorm.DB) error {
+	// 1. Validar los datos de entrada primero. Si fallan, no tocamos la BD.
+	if err := checkUpdateFieldSpecialty(request); err != nil {
+		return err // Error de validación (ej. 400 Bad Request)
+	}
+
+	// 2. Recuperar el modelo existente de la base de datos.
+	//    Esto también confirma que el 'id' es válido y el registro está activo.
+	id := uint(request.ID)
+	model_to_update, err := specialties_db.GetSpecialtyById(db, id)
+	if err != nil {
+		return err // Error de "no encontrado" (ej. 404 Not Found) o error de BD (500)
+	}
+
+	// 3. Aplicar los cambios al modelo recuperado (si se proporcionaron).
+	if request.Name != "" {
+		model_to_update.Name = request.Name
+	}
+
+	if request.Description != "" {
+		model_to_update.Description = request.Description
+	}
+
+	// 4. ¡PASO CRÍTICO FALTANTE! Guardar el modelo actualizado en la base de datos.
+	//    Usamos la función `UpdateSpecialty` que corregimos antes.
+	if err := specialties_db.UpdateSpecialty(db, model_to_update); err != nil {
+		return err // Error durante la operación de guardado (ej. 500 Internal Server Error)
+	}
+
+	// 5. Si todo fue exitoso, devolver nil.
+	return nil
+}
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+func DeleteSpecialtyController(id int64, db *gorm.DB) error {
+	if id <= 0 {
+		return errors.New("invalid id")
+	}
+
+	err := specialties_db.DeleteSpecialty(db, uint(id))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+// ------       Auxiliary Functions      ------     //
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+var unicodeLetterNumberRegex = regexp.MustCompile(`^[\pL\pM\pN\s]+$`)
+
+func checkUpdateFieldSpecialty(request *specialties_structs.SpecialtyUpdate) error {
+	// 1. Validar Name si fue proporcionado
+	if request.Name != "" { // Comprobamos si el puntero no es nulo
+		name := request.Name // Obtenemos el valor
+		if len(name) < 4 {
+			return errors.New("specialty name must be at least 4 characters long")
+		}
+		if !unicodeLetterNumberRegex.MatchString(name) {
+			return errors.New("specialty name must contain only letters, numbers and spaces")
+		}
+	}
+
+	// 2. Validar Description si fue proporcionada
+	if request.Description != "" {
+		description := request.Description
+		if len(description) < 10 { // Ejemplo: longitud mínima si se proporciona
+			return errors.New("specialty description must be at least 10 characters long")
+		}
+		if len(description) > 1000 { // Ejemplo: longitud máxima
+			return errors.New("specialty description cannot be longer than 1000 characters")
+		}
+	}
+
+	return nil
 }

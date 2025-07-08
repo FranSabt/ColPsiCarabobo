@@ -18,7 +18,6 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 	group.Get("/count", func(c *fiber.Ctx) error {
 		// Usamos un cierre para pasar la conexión 'db.Db' (que es *gorm.DB) al handler.
 		return specialties.GetPsiSpecialtiesCount(c, db.DB)
-
 	})
 
 	// Ruta: GET /specialties/names

@@ -91,9 +91,9 @@ func AutoMigrateDB(db *gorm.DB) error {
 	}
 
 	db.Migrator().DropTable("psi_specialties")
-	db.Migrator().DropTable(&models.PsiSpecialties{})
+	db.Migrator().DropTable(&models.PsiSpecialty{})
 
-	err = db.AutoMigrate(&models.PsiSpecialties{})
+	err = db.AutoMigrate(&models.PsiSpecialty{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
