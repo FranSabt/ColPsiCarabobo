@@ -1,6 +1,7 @@
 package specialties_db
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -53,31 +54,45 @@ func GetPsiSpecialtiesNames(db *gorm.DB) ([]specialties_structs.SpecialtyName, e
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-func CountSpecialties(db *gorm.DB) (int64, error) {
-	// 1. Declarar una variable para almacenar el resultado del conteo.
-	//    GORM usa int64 para los conteos para evitar desbordamientos en tablas muy grandes.
+func CountAndGetLastSpecialtyID(db *gorm.DB) (int64, int64, error) {
+	// 1. Declarar variables para almacenar los resultados.
+	// Usamos sql.NullInt64 para el último ID porque MAX(id) puede devolver NULL
+	// si no hay registros que coincidan, y esto lo maneja de forma segura.
 	var count int64
+	var lastID sql.NullInt64
 
-	// 2. Especificar el modelo para indicar en qué tabla contar y ejecutar Count().
-	//    GORM generará una consulta SQL similar a: SELECT COUNT(*) FROM "psi_specialties";
-	//    El resultado se guarda en la variable `count` que pasamos por referencia.
-	result := db.Model(&models.PsiSpecialty{}).
+	// 2. Ejecutar una única consulta para obtener el conteo Y el ID máximo.
+	// GORM generará una consulta SQL similar a:
+	// SELECT COUNT(*), MAX(id) FROM "psi_specialties" WHERE active = true;
+	// Usamos .Row().Scan() para escanear los dos resultados en nuestras variables.
+	err := db.Model(&models.PsiSpecialty{}).
 		Where("active = ?", true).
-		Count(&count)
+		Select("COUNT(*), MAX(id)").
+		Row().
+		Scan(&count, &lastID)
 
 	// 3. Comprobar si hubo un error durante la consulta.
-	if result.Error != nil {
-		// En caso de error, devolvemos 0 y el error.
-		return 0, result.Error
+	if err != nil {
+		// En caso de error, devolvemos ceros y el error.
+		return 0, 0, err
 	}
 
+	// 4. Comprobar si el conteo es cero (lógica de negocio original).
+	// He corregido el mensaje de error de "imagenes" a "especialidades".
 	if count < 1 {
-		// En caso de error, devolvemos 0 y el error.
-		return 0, errors.New("retorno un valo negativo")
+		return 0, 0, fmt.Errorf("no se encontraron especialidades activas (el conteo es %d)", count)
 	}
 
-	// 4. Si la consulta fue exitosa, devolvemos el conteo y un error nulo.
-	return count, nil
+	// 5. Convertir sql.NullInt64 a int64.
+	// Si lastID.Valid es true, significa que MAX(id) devolvió un valor.
+	// Si es false (la tabla estaba vacía), nuestro valor final será 0.
+	var finalLastID int64
+	if lastID.Valid {
+		finalLastID = lastID.Int64
+	}
+
+	// 6. Si todo fue exitoso, devolvemos el conteo, el último ID y un error nulo.
+	return count, finalLastID, nil
 }
 
 //////////////////////////////////////////////////////

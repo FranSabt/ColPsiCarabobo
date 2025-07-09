@@ -22,9 +22,11 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 	if err := c.BodyParser(&request); err != nil {
 		return c.JSON(fiber.Map{
 			"success": false,
-			"error":   "Internal server error",
+			"error":   "Error while parsing the request",
 		})
 	}
+
+	fmt.Println(request)
 
 	id, err := uuid.Parse(request.AdmindId)
 	if err != nil {
@@ -81,12 +83,13 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 //////////////////////////////////////////////////////
 
 func GetPsiSpecialtiesCount(c *fiber.Ctx, db *gorm.DB) error {
-	count, err := specialties_controller.GetPsiSpecialtiesCountController(db)
+	count, last_id, err := specialties_controller.GetPsiSpecialtiesCountController(db)
 	if err != nil {
 		// Si hay un error de base de datos, es un problema del servidor.
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
-			"error":   "Failed to retrieve specialties count",
+			"message": "Failed to retrieve specialties count",
+			"error":   err.Error(),
 		})
 	}
 
@@ -94,6 +97,7 @@ func GetPsiSpecialtiesCount(c *fiber.Ctx, db *gorm.DB) error {
 		"success": true,
 		"data": fiber.Map{
 			"total_count": count,
+			"last_id":     last_id,
 		},
 	})
 }
@@ -186,7 +190,7 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 	}
 
 	// Verificamos que haya algo que actualizar
-	if request.Description == "" || request.Name == "" {
+	if request.Description == "" && request.Name == "" {
 		return c.JSON(fiber.Map{
 			"success": false,
 			"error":   "Nothing to update",
@@ -224,6 +228,7 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
+// TODO Eliminar el query
 func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 	admin_id := c.Query("admin_id", "")
 	specialty_id := c.QueryInt("specialty_id", 0)

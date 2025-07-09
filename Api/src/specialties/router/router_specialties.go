@@ -32,6 +32,14 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 		return specialties.GetPsiSpecialtiesDescription(c, db.DB)
 	})
 
+	group.Put("/:id", func(c *fiber.Ctx) error {
+		return specialties.UpdatePsiSepecialty(c, db.DB)
+	})
+
+	group.Delete("/:id", func(c *fiber.Ctx) error {
+		return specialties.DeletePsiSpecialty(c, db.DB)
+	})
+
 	// --- RUTA DE CREACIÓN (POST) ---
 
 	// Ruta: POST /specialties/

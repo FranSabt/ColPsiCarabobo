@@ -1,9 +1,9 @@
 package specialties_structs
 
 type SpecialtiesRequest struct {
-	Name        string
-	Description string
-	AdmindId    string
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	AdmindId    string `json:"admin_id"`
 }
 
 type SpecialtyName struct {

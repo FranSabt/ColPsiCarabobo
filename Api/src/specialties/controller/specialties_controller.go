@@ -44,13 +44,13 @@ func SaveNewSpecialty(db *gorm.DB, newSpecialty models.PsiSpecialty) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-func GetPsiSpecialtiesCountController(db *gorm.DB) (int64, error) {
-	count, err := specialties_db.CountSpecialties(db)
+func GetPsiSpecialtiesCountController(db *gorm.DB) (int64, int64, error) {
+	count, last_id, err := specialties_db.CountAndGetLastSpecialtyID(db)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
-	return count, nil
+	return count, last_id, nil
 }
 
 //////////////////////////////////////////////////////
