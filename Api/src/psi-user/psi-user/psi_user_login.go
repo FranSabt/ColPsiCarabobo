@@ -4,10 +4,12 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	"github.com/FranSabt/ColPsiCarabobo/src/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -69,6 +71,15 @@ func PsiUserLogin(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
+	psiUser.Key = utils.GenerateSecureRandomString(512)
+	err = psi_user_db.SaveUpdatedPsiUserOnly(db, psiUser)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+
+	}
 	// // Generar token JWT
 	// token, err := generateJWTToken(psiUser)
 	// if err != nil {
@@ -79,13 +90,23 @@ func PsiUserLogin(c *fiber.Ctx, db *gorm.DB) error {
 	//     })
 	// }
 
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["username"] = psiUser.Username
+	claims["user_id"] = psiUser.ID
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	t, err := token.SignedString([]byte(psiUser.Key))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	// return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": t})
+
 	return c.JSON(fiber.Map{
 		"success": true,
-		"data": fiber.Map{
-			"user_id":  psiUser.ID,
-			"username": psiUser.Username,
-			// "token":    token,
-		},
+		"data":    t,
 	})
 }
 

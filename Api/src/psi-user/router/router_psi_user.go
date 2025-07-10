@@ -2,6 +2,7 @@ package psi_user_router
 
 import (
 	"github.com/FranSabt/ColPsiCarabobo/db"
+	"github.com/FranSabt/ColPsiCarabobo/src/middleware"
 	psi_user_admin_presenter "github.com/FranSabt/ColPsiCarabobo/src/psi-user/admin"
 	psiuser_presenter "github.com/FranSabt/ColPsiCarabobo/src/psi-user/psi-user"
 	"github.com/gofiber/fiber/v2"
@@ -22,58 +23,76 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 		return psiuser_presenter.GetPsiUserById(c, db.DB)
 	})
 
-	//* ---- PRIVATE ROUTES ---- *//
-	// Login
 	group.Post("/login", func(c *fiber.Ctx) error {
 		return psiuser_presenter.PsiUserLogin(c, db.DB)
 	})
+
+	//==================================================//
+	//      RUTAS PRIVADAS (PARA USUARIOS LOGUEADOS)    //
+	//==================================================//
+	// Todas las rutas en este grupo requerirán un token válido.
+
+	private := group.Group("/psi-user")                    // Puedes nombrar el grupo como quieras
+	private.Use(middleware.ProtectedWithDynamicKey(db.DB)) // Aplicamos el middleware aquí
+
 	// Get My info
-	group.Get("/psi-user", func(c *fiber.Ctx) error {
+	private.Get("/psi-user", func(c *fiber.Ctx) error {
 		return psiuser_presenter.GetPsiUserSelfInfo(c, db.DB)
 	})
 	// Update my info
-	group.Put("/psi-user", func(c *fiber.Ctx) error {
+	private.Put("/psi-user", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserSelfInfo(c, db.DB)
 	})
 	// Get self profile pics
-	group.Get("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	private.Get("/psi-user/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.GetMyProfilePic(c, db)
 	})
-	// Update Profile Pic
-	group.Post("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	// Create/Upload Profile Pic
+	private.Post("/psi-user/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.CreatePsiUserImage(c, db)
 	})
-	// update Profile Pic
-	group.Put("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	// Update Profile Pic
+	private.Put("/psi-user/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserImage(c, db)
 	})
-	// Delete Profile Pic
-	group.Put("/psi-user/user-pic", func(c *fiber.Ctx) error {
-		return psiuser_presenter.UpdatePsiUserImage(c, db)
+	// Delete Profile Pic - NOTA: HTTP DELETE es más semántico que PUT para borrar.
+	private.Delete("/psi-user/user-pic", func(c *fiber.Ctx) error {
+		// Asumo que tienes un manejador para borrar, si no, puedes crearlo.
+		// return psiuser_presenter.DeletePsiUserImage(c, db)
+		return c.SendString("DELETE /psi-user/user-pic (protected)")
 	})
 
-	//* ADMIND ROUTES **/
+	//==================================================//
+	//       RUTAS DE ADMINISTRADOR (AÚN MÁS PRIVADAS)   //
+	//==================================================//
+	// Estas rutas también están en 'group', por lo que son públicas.
+	// Deberían tener su propio grupo y, idealmente, un middleware adicional
+	// que verifique el rol de "admin" en el token.
+
+	admin := group.Group("/admin")
+	// Primero, requiere que el usuario esté logueado.
+	// admin.Use(middleware.ProtectedWithDynamicKey(db.DB))
+	// Segundo, requiere que el usuario tenga el rol de admin.
+	// admin.Use(middleware.AdminRequired()) // <-- Deberías crear este middleware
+
 	// create PSI
-	// update PSI
-	// create massive
-	group.Post("/upload-csv", func(c *fiber.Ctx) error {
-		return psi_user_admin_presenter.UploadCsv(c, db.DB)
-	})
-
-	// TODO: minimisar la cantidad de informacion enviada en la respuesta
-	group.Get("/psi-user", func(c *fiber.Ctx) error {
-		return psi_user_admin_presenter.AdminGetPsiUserList(c, db.DB)
-	})
-
-	group.Post("/psi-user", func(c *fiber.Ctx) error {
+	admin.Post("/psi-user", func(c *fiber.Ctx) error {
 		return psi_user_admin_presenter.AdminCreatePsiUser(c, db.DB)
 	})
-
-	group.Post("/psi-user-by-id", func(c *fiber.Ctx) error {
+	// upload CSV
+	admin.Post("/upload-csv", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.UploadCsv(c, db.DB)
+	})
+	// Get user list as admin
+	admin.Get("/psi-user-list", func(c *fiber.Ctx) error {
+		return psi_user_admin_presenter.AdminGetPsiUserList(c, db.DB)
+	})
+	// Get specific user by ID as admin
+	admin.Post("/psi-user-by-id", func(c *fiber.Ctx) error {
 		return psi_user_admin_presenter.GetPsiUsersByID(c, db.DB)
 	})
-
-	group.Patch("/psi-user-by-id", func(c *fiber.Ctx) error {
+	// Patch user by ID as admin
+	admin.Patch("/psi-user-by-id", func(c *fiber.Ctx) error {
 		return psi_user_admin_presenter.PatchPsiUserByID(c, db.DB)
 	})
 }

@@ -11,6 +11,7 @@ type PsiUserModel struct {
 	Username string    `gorm:"size:25;not null" json:"username"`
 	Email    string    `gorm:"size:50;not null" json:"email"`
 	Password string    `gorm:"size:512;not null" json:"password"`
+	Key      string    `gorm:"size:512;" json:"key"`
 
 	// Identity
 	FirstName      string    `gorm:"size:255;not null" json:"first_name"`

@@ -10,33 +10,50 @@ import (
 	psi_user_request "github.com/FranSabt/ColPsiCarabobo/src/psi-user/request-structs"
 	"github.com/FranSabt/ColPsiCarabobo/src/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 func GetPsiUserSelfInfo(c *fiber.Ctx, db *gorm.DB) error {
-	id := c.Query("id")
-
-	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"error":   "No Id",
+	// El middleware "ProtectedWithDynamicKey" ya hizo toda la validación.
+	// Podemos confiar en que c.Locals("user") existe y es válido.
+	userToken, ok := c.Locals("user").(*jwt.Token)
+	if !ok || userToken == nil {
+		// Este error no debería ocurrir si el middleware está bien configurado,
+		// pero es una buena práctica de defensa.
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "User token not found in context after auth",
 		})
 	}
 
+	// Extraer los claims
+	claims, ok := userToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Invalid token claims"})
+	}
+
+	// Extraer el ID. Usamos "user_id" como lo definiste en el login.
+	id, ok := claims["user_id"].(string)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "User ID not found in claims"})
+	}
+
+	// Ahora que tienes el ID del usuario autenticado, busca sus detalles para devolverlos.
 	uuid_pased, err := uuid.Parse(id)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"error":   "not valid id",
+			"error":   "not valid id format in token",
 		})
 	}
 
 	psiuser_model, psiuser_data, err := psi_user_db.GetPsiUserByIdDetails(db, uuid_pased)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
-			"error":   "not valid id",
+			"error":   "user details not found",
 		})
 	}
 

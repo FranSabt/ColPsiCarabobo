@@ -47,6 +47,11 @@ func main() {
 	v1 := api.Group("/v1")
 	router.Router(v1, Db_Conteiner)
 
+	// 404 Handler
+	app.Use(func(c *fiber.Ctx) error {
+		return c.SendStatus(404) // => 404 "Not Found"
+	})
+
 	// Start the server
 	app.Listen(":5000")
 }
