@@ -2,6 +2,7 @@ package specialties_router
 
 import (
 	"github.com/FranSabt/ColPsiCarabobo/db"
+	"github.com/FranSabt/ColPsiCarabobo/src/middleware"
 	"github.com/FranSabt/ColPsiCarabobo/src/specialties/specialties"
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,11 +33,14 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 		return specialties.GetPsiSpecialtiesDescription(c, db.DB)
 	})
 
-	group.Put("/:id", func(c *fiber.Ctx) error {
+	admin := group.Group("")
+	admin.Use(middleware.ProtectedWithDynamicKey(db.DB))
+
+	admin.Put("/:id", func(c *fiber.Ctx) error {
 		return specialties.UpdatePsiSepecialty(c, db.DB)
 	})
 
-	group.Delete("/:id", func(c *fiber.Ctx) error {
+	admin.Delete("/:id", func(c *fiber.Ctx) error {
 		return specialties.DeletePsiSpecialty(c, db.DB)
 	})
 
@@ -44,7 +48,7 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 
 	// Ruta: POST /specialties/
 	// Crea una nueva especialidad.
-	group.Post("/", func(c *fiber.Ctx) error {
+	admin.Post("/", func(c *fiber.Ctx) error {
 		return specialties.CreatePsiSpecialty(c, db.DB)
 	})
 }

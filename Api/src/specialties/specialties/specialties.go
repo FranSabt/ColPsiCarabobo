@@ -9,6 +9,7 @@ import (
 	specialties_controller "github.com/FranSabt/ColPsiCarabobo/src/specialties/controller"
 	specialties_mapper "github.com/FranSabt/ColPsiCarabobo/src/specialties/mapper"
 	specialties_structs "github.com/FranSabt/ColPsiCarabobo/src/specialties/request-structs"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -228,13 +229,27 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
+type deleteSpecialty struct {
+	AdminId     string `json:"admin_id"`
+	SpecialtyId int64  `json:"specialty_id"`
+}
+
 // TODO Eliminar el query
 func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
-	admin_id := c.Query("admin_id", "")
-	specialty_id := c.QueryInt("specialty_id", 0)
+	var request deleteSpecialty
+
+	if err := c.BodyParser(&request); err != nil {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"error":   "Internal server error",
+		})
+	}
+
+	admin_id := request.AdminId
+	specialty_id := request.SpecialtyId
 
 	admin_uuid, err := uuid.Parse(admin_id)
-	if err != nil {
+	if err != nil || specialty_id <= 0 {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid id format",

@@ -1,7 +1,9 @@
 package db_admin
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
@@ -29,6 +31,49 @@ type AdminUserResponse struct {
 	CanCreateTags          bool `json:"can_create_tags"`
 	CanEditTags            bool `json:"can_edit_tags"`
 	CanDeleteTags          bool `json:"can_delete_tags"`
+}
+
+func GetAdminById(id uuid.UUID, db *gorm.DB) (*models.UserAdmin, error) {
+	var admin models.UserAdmin
+
+	// 1. Ejecutar la consulta. `db.First` devuelve un objeto *gorm.DB.
+	// El error, si existe, se encuentra en el campo `result.Error`.
+	result := db.First(&admin, "id = ?", id)
+
+	// 2. Comprobar si hubo un error en la consulta.
+	if result.Error != nil {
+		// Es una buena práctica verificar si el error específico es que no se encontró el registro.
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// Devolvemos una estructura vacía y el error específico para que quien llame a la función sepa qué pasó.
+			return nil, gorm.ErrRecordNotFound
+		}
+		// Para cualquier otro tipo de error de base de datos (conexión, sintaxis, etc.).
+		return nil, result.Error
+	}
+
+	// 3. Si no hubo errores, la variable 'admin' ha sido poblada con los datos.
+	// Devolvemos el admin encontrado y un error nulo para indicar que todo fue exitoso.
+	return &admin, nil
+}
+
+func CreateOrUpdateAdmin(admin_model models.UserAdmin, db *gorm.DB) error {
+	// - Si admin_model.ID es el valor cero (uuid.Nil), crea un nuevo registro.
+	// - Si admin_model.ID tiene un valor, actualiza el registro con ese ID.
+	result := db.Save(&admin_model)
+
+	// Es una buena práctica siempre verificar si ocurrió un error.
+	if result.Error != nil {
+		// En una aplicación real, manejarías este error de forma más elegante.
+		// Por ahora, solo lo imprimimos en la consola.
+		log.Printf("Error al guardar el administrador: %v", result.Error)
+		return result.Error
+	}
+
+	// Si todo fue bien, el registro fue creado o actualizado.
+	// El `admin_model` ahora tendrá el ID asignado por la base de datos si fue una creación.
+	log.Printf("Administrador guardado exitosamente con ID: %s", admin_model.ID)
+	log.Printf("Total de filas afectadas: %d", result.RowsAffected)
+	return nil
 }
 
 func GetPaginatedAdmins(db *gorm.DB, page, pageSize int, username, email string, isActive *bool) ([]AdminUserResponse, int64, error) {

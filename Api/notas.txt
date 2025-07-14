@@ -1,4 +1,13 @@
 - Crear un struct para las BD
 
-### ADAPTAR EL PUT de imagen
+### los username y los emails deben ser unicos
 ### QUITAR EL QUERY PARA BORRAR Specialidad
+
+
+func ProtectedWithDynamicKey(db *gorm.DB) fiber.Handler  ==> modificar o crear una 
+parecida que funcione con los administradores
+
+
+
+crear funcion que verifique la existencia del admin y de los permisos
+idealmente los permiso se pararian dinamicamente

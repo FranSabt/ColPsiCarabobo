@@ -207,7 +207,7 @@ func UpdatePsiUserImage(c *fiber.Ctx, db db.StructDb) error {
 
 	// Obtener archivo
 	fileHeader, err := c.FormFile("image")
-	if err != nil {
+	if err != nil || fileHeader == nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Image file is required",
 			"success": false,
@@ -495,10 +495,10 @@ func DeletePsiUserImage(c *fiber.Ctx, db db.StructDb) error {
 	})
 }
 
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
+// ////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////
+// TODO: Modificar para que busque por id
 func GetMyProfilePic(c *fiber.Ctx, db db.StructDb) error {
 
 	userID := c.Query("id")
@@ -558,6 +558,61 @@ func GetMyProfilePic(c *fiber.Ctx, db db.StructDb) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
+
+func GetMyProfilePicList(c *fiber.Ctx, db db.StructDb) error {
+	userID := c.Query("id")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Empty param id",
+			"success": false,
+		})
+	}
+
+	// Parsear UUID
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Invalid UUID format",
+			"success": false,
+		})
+	}
+
+	// Validar si existe el usuario
+	fmt.Println("Buscando Usuario")
+	user, err := psi_user_db.GetPsiUserById(db.DB, uid)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Can't connect to DB",
+			"success": false,
+		})
+	}
+	if user == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "User doesn't exist",
+			"success": false,
+		})
+	}
+
+	images_ids, err := db_images.GetAllUserProfilePicsID(uid, db.Image)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "Can't connect to DB",
+			"success": false,
+		})
+	}
+	if images_ids == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "User doesn't exist",
+			"success": false,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":    true,
+		"message":    "Image deleted successfully",
+		"images:ids": images_ids,
+	})
+}
 
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
