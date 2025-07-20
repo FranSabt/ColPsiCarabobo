@@ -60,6 +60,11 @@ func Connect() (*gorm.DB, error) {
 		AutoMigrateDB(db)
 	}
 
+	err = createSudoAdmin(db)
+	if err != nil {
+		return nil, fmt.Errorf("error checking the sudo admin: %w", err)
+	}
+
 	// Configurar los parámetros de la conexión, como máximo número de conexiones abiertas, etc.
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(25)
@@ -94,6 +99,13 @@ func AutoMigrateDB(db *gorm.DB) error {
 	db.Migrator().DropTable(&models.PsiSpecialty{})
 
 	err = db.AutoMigrate(&models.PsiSpecialty{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
+
+	db.Migrator().DropTable("user_admin")
+	db.Migrator().DropTable(&models.UserAdmin{})
+	err = db.AutoMigrate(&models.UserAdmin{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}

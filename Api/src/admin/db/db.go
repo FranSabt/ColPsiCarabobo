@@ -127,3 +127,34 @@ func GetPaginatedAdmins(db *gorm.DB, page, pageSize int, username, email string,
 
 	return admins, totalRecords, nil
 }
+
+func GetAdminByUsernameOrEmal(db *gorm.DB, username, query string) (*models.UserAdmin, error) {
+	var admin models.UserAdmin
+	err := db.Where(query, username).First(&admin).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &admin, nil
+}
+
+func SaveUpdatedAdminOnly(db *gorm.DB, admin *models.UserAdmin) error {
+	// Iniciar transacción
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Guardar admin
+	if err := tx.Save(admin).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Commit si todo fue bien
+	return tx.Commit().Error
+}

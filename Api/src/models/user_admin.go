@@ -9,6 +9,7 @@ type UserAdmin struct {
 	Password string    `gorm:"size:512;not null" json:"password"`
 	IsActive bool      `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 	Key      string    `gorm:"size:512;" json:"key"`
+	Sudo     bool      `gorm:"default:false" json:"_"`
 
 	// Permisos sobre administradores
 	CanCreateAdmin bool `gorm:"default:false" json:"can_create_admin"`
