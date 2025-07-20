@@ -8,10 +8,11 @@ import (
 
 type PsiUserModel struct {
 	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	Username string    `gorm:"size:25;not null" json:"username"`
+	Username string    `gorm:"size:25;unique;not null" json:"username"`
 	Email    string    `gorm:"size:255;unique;not null" json:"email"`
 	Password string    `gorm:"size:512;not null" json:"-"`
 	Key      string    `gorm:"size:512;" json:"key"`
+	IsActive bool      `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 
 	// Identity
 	FirstName      string    `gorm:"size:255;not null" json:"first_name"`
@@ -50,6 +51,11 @@ type PsiUserModel struct {
 	// Especialidades (campos opcionales)
 	PrimarySpecialty   string `gorm:"size:50" json:"primary_specialty"`   // Puede ser nulo
 	SecondarySpecialty string `gorm:"size:50" json:"secondary_specialty"` // Puede ser nulo
+	// Si necesitamos mas especialidades la agregamos pero no desea que tenga mas de dos por el momento, siempre deben ser limitadas.
+
+	// Bio
+	MiniBio   string `json:"mini_bio"`              // mini bio es una carta de presentacion corta
+	BioTextID uint   `json:"bio_text_id,omitempty"` // no vamos a recuerar el texto directamente, solo si es necesario
 
 	// Relación con PsiUserColData
 	PsiUserColDataID *uuid.UUID `gorm:"type:uuid" json:"psi_user_col_data_id"` // Clave foránea

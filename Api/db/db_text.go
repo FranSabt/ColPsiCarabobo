@@ -11,16 +11,16 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var DB_Images Dbinstance
+var DB_Text Dbinstance
 
-func ConnectImage() (*gorm.DB, error) {
+func ConnectText() (*gorm.DB, error) {
 	// Obtener las variables de entorno
-	host := os.Getenv("DB_HOST_IMAGE")
-	user := os.Getenv("DB_USER_IMAGE")
-	password := os.Getenv("DB_PASSWORD_IMAGE")
-	dbname := os.Getenv("DB_NAME_IMAGE")
-	port := os.Getenv("DB_PORT_IMAGE")
-	timezone := os.Getenv("DB_TIMEZONE_IMAGE")
+	host := os.Getenv("DB_HOST_TEXT")
+	user := os.Getenv("DB_USER_TEXT")
+	password := os.Getenv("DB_PASSWORD_TEXT")
+	dbname := os.Getenv("DB_NAME_TEXT")
+	port := os.Getenv("DB_PORT_TEXT")
+	timezone := os.Getenv("DB_TIMEZONE_TEXT")
 
 	// Crear el DSN (Data Source Name)
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
@@ -48,7 +48,7 @@ func ConnectImage() (*gorm.DB, error) {
 	// if development == "true" && automigrate == "true" {
 	// 	AutoMigrateDB(db)
 	// }
-	AutoMigrateDBImage(db)
+	AutoMigrateDBText(db)
 
 	// Configurar los parámetros de la conexión, como máximo número de conexiones abiertas, etc.
 	sqlDB.SetMaxOpenConns(25)
@@ -58,31 +58,19 @@ func ConnectImage() (*gorm.DB, error) {
 	return db, nil
 }
 
-func AutoMigrateDBImage(db *gorm.DB) error {
+func AutoMigrateDBText(db *gorm.DB) error {
 	// Elimina primero la tabla intermedia, si existe
-	db.Migrator().DropTable("images_model")
+	db.Migrator().DropTable("text_model")
 
 	// Elimina las tablas principales
-	db.Migrator().DropTable(&models.ProfilePicModel{})
+	db.Migrator().DropTable(&models.TextModel{})
 	// db.Migrator().DropTable(&models.SpellsModel{})
 
 	// Crea las tablas principales primero
-	err := db.AutoMigrate(&models.ProfilePicModel{})
+	err := db.AutoMigrate(&models.TextModel{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
 
-	// Elimina primero la tabla intermedia, si existe
-	db.Migrator().DropTable("post_images_model")
-
-	// Elimina las tablas principales
-	db.Migrator().DropTable(&models.PostPicModel{})
-	// db.Migrator().DropTable(&models.SpellsModel{})
-
-	// Crea las tablas principales primero
-	err = db.AutoMigrate(&models.PostPicModel{})
-	if err != nil {
-		return fmt.Errorf("error al migrar las tablas: %w", err)
-	}
 	return nil
 }

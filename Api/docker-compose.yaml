@@ -21,7 +21,7 @@ services:
   db_images:
     image: postgres:16-alpine
     ports:
-      - "5634:5432"
+      - "5635:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -38,6 +38,26 @@ services:
     networks:
       - mynetwork
 
+  db_text:
+    image: postgres:16-alpine
+    ports:
+      - "5634:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: text_database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - text_postgres_data:/var/lib/postgresql/data
+      # Usar el mismo directorio de inicialización que db
+      - ./db_init:/docker-entrypoint-initdb.d
+    networks:
+      - mynetwork
+
   app:
     build:
       context: .
@@ -47,6 +67,7 @@ services:
     depends_on:
       - db
       - db_images
+      - db_text
     environment:
       # DB DATA
       - ADMIN_USERNAME=admin
@@ -65,6 +86,13 @@ services:
       - DB_NAME_IMAGE=images_database
       - DB_PORT_IMAGE=5432
       - DB_TIMEZONE_IMAGE=America/Caracas
+      # DB TEXT
+      - DB_HOST_TEXT=db_text
+      - DB_USER_TEXT=postgres
+      - DB_PASSWORD_TEXT=postgres
+      - DB_NAME_TEXT=text_database
+      - DB_PORT_TEXT=5432
+      - DB_TIMEZONE_TEXT=America/Caracas
       - DEVELOPMENT=true
       - AUTOMIGRATE=true
       # - DEVELOPMENT=true
@@ -72,22 +100,23 @@ services:
     networks:
       - mynetwork
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "8080:80"
-    depends_on:
-      - db
-      - db_images
-    networks:
-      - mynetwork
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "8080:80"
+  #   depends_on:
+  #     - db
+  #     - db_images
+  #   networks:
+  #     - mynetwork
 
 volumes:
   postgres_data:
   images_postgres_data:
+  text_postgres_data:
 
 networks:
   mynetwork:

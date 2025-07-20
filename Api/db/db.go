@@ -14,6 +14,7 @@ import (
 type StructDb struct {
 	Image *gorm.DB
 	DB    *gorm.DB
+	Text  *gorm.DB
 }
 
 type Dbinstance struct {
@@ -30,8 +31,8 @@ func Connect() (*gorm.DB, error) {
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
 	timezone := os.Getenv("DB_TIMEZONE")
-	// automigrate := os.Getenv("AUTOMIGRATE")
-	// development := os.Getenv("DEVELOPMENT")
+	automigrate := os.Getenv("AUTOMIGRATE")
+	development := os.Getenv("DEVELOPMENT")
 
 	// Crear el DSN (Data Source Name)
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
@@ -56,9 +57,9 @@ func Connect() (*gorm.DB, error) {
 	db.Logger = logger.Default.LogMode(logger.Info)
 	log.Println("running migrations")
 
-	// if development == "true" && automigrate == "true" {
-	// 	AutoMigrateDB(db)
-	// }
+	if development == "true" && automigrate == "true" {
+		AutoMigrateDB(db)
+	}
 
 	err = createSudoAdmin(db)
 	if err != nil {
@@ -75,7 +76,7 @@ func Connect() (*gorm.DB, error) {
 
 func AutoMigrateDB(db *gorm.DB) error {
 	// Elimina primero la tabla intermedia, si existe
-	db.Migrator().DropTable("psi_user")
+	db.Migrator().DropTable("psi_users")
 
 	// Elimina las tablas principales
 	db.Migrator().DropTable(&models.PsiUserModel{})
@@ -103,9 +104,16 @@ func AutoMigrateDB(db *gorm.DB) error {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
 
-	db.Migrator().DropTable("user_admin")
+	db.Migrator().DropTable("user_admins")
 	db.Migrator().DropTable(&models.UserAdmin{})
 	err = db.AutoMigrate(&models.UserAdmin{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
+
+	db.Migrator().DropTable("posts")
+	db.Migrator().DropTable(&models.Post{})
+	err = db.AutoMigrate(&models.Post{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
