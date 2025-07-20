@@ -73,7 +73,7 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 	// Primero, requiere que el usuario esté logueado.
 	// admin.Use(middleware.ProtectedWithDynamicKey(db.DB))
 	// Segundo, requiere que el usuario tenga el rol de admin.
-	// admin.Use(middleware.AdminRequired()) // <-- Deberías crear este middleware
+	admin.Use(middleware.ProtectedAdminWithDynamicKey(db.DB)) // <-- Deberías crear este middleware
 
 	// create PSI
 	admin.Post("/psi-user", func(c *fiber.Ctx) error {

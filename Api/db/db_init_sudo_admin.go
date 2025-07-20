@@ -39,7 +39,8 @@ func createSudoAdmin(db *gorm.DB) error {
 	}
 	if exists {
 		// Es mejor devolver un error conocido que fallar silenciosamente.
-		return errors.New("ya existe un super administrador en la base de datos")
+		fmt.Println("ya existe un super administrador en la base de datos")
+		return nil
 	}
 
 	// 2. Obtenemos y validamos las variables de entorno.

@@ -33,8 +33,10 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 		return specialties.GetPsiSpecialtiesDescription(c, db.DB)
 	})
 
+	// RUTAS PRIVADAS //
+
 	admin := group.Group("")
-	admin.Use(middleware.ProtectedWithDynamicKey(db.DB))
+	admin.Use(middleware.ProtectedAdminWithDynamicKey(db.DB))
 
 	admin.Put("/:id", func(c *fiber.Ctx) error {
 		return specialties.UpdatePsiSepecialty(c, db.DB)
@@ -46,8 +48,6 @@ func SpecialtiesRouter(group fiber.Router, db db.StructDb) {
 
 	// --- RUTA DE CREACIÓN (POST) ---
 
-	// Ruta: POST /specialties/
-	// Crea una nueva especialidad.
 	admin.Post("/", func(c *fiber.Ctx) error {
 		return specialties.CreatePsiSpecialty(c, db.DB)
 	})

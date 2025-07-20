@@ -11,3 +11,8 @@ parecida que funcione con los administradores
 
 crear funcion que verifique la existencia del admin y de los permisos
 idealmente los permiso se pararian dinamicamente
+
+TipTap para bio
+Quill 
+
+Cuando guardas HTML generado por el usuario en tu base de datos y luego lo muestras en tu sitio, abres la puerta a ataques de Cross-Site Scripting (XSS). Un usuario malicioso podría introducir etiquetas <script> en el editor.

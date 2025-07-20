@@ -9,8 +9,8 @@ import (
 type PsiUserModel struct {
 	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	Username string    `gorm:"size:25;not null" json:"username"`
-	Email    string    `gorm:"size:50;not null" json:"email"`
-	Password string    `gorm:"size:512;not null" json:"password"`
+	Email    string    `gorm:"size:255;unique;not null" json:"email"`
+	Password string    `gorm:"size:512;not null" json:"-"`
 	Key      string    `gorm:"size:512;" json:"key"`
 
 	// Identity
