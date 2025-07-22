@@ -23,12 +23,52 @@ func GetPosts(c *fiber.Ctx, db *gorm.DB) error {
 	posts, err := post_db.GetActivePostsPaginated(post_type, page, page_size, db)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
 			"error":   "Error al obtener los psicólogos",
 			"details": err.Error(),
 		})
 	}
 
 	return c.JSON(posts)
+}
+
+func GetPostText(c *fiber.Ctx, db *gorm.DB, database_text *gorm.DB) error {
+
+	id := c.QueryInt("id", 0)
+	if id < 1 {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
+			"error":   "invalid id int",
+			"details": "id can be 0 or less",
+		})
+	}
+
+	uint_id := uint(id)
+
+	posts, err := post_db.GetPostById(uint_id, db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
+			"error":   fmt.Sprintf("error obtainint the post with id: %v", id),
+			"details": err.Error(),
+		})
+	}
+
+	post_text, err := text_db.GetTextByIDDb(database_text, posts.TextID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
+			"error":   fmt.Sprintf("error obtainint the post TEXT with text id: %v", posts.TextID),
+			"details": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"succes":  true,
+		"error":   nil,
+		"details": nil,
+		"data":    post_text,
+	})
 }
 
 type CreatePostRequest struct {

@@ -1,6 +1,17 @@
-- Crear un struct para las BD
+automatizar los test de Postman
 
 quien crea y modifica entradas
+Testeasr POST
+
+Revisar rutas profile pic
+
+Ruta de getPost solo psicologos
+
+
+Crear todo lo relativo a los postgrados
+    - Info
+    - Imagenes
+
 
 -------------------------
 

@@ -37,7 +37,9 @@ func connectWithRetries(connectFunc func() (*gorm.DB, error), dbName string, ret
 }
 
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 4 * 1024 * 1024, // Límite de 4 MB en el body
+	})
 
 	// Logger
 	app.Use(config.ResponseLogger)
