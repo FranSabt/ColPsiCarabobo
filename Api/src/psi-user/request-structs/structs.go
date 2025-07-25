@@ -1,8 +1,9 @@
 package psi_user_request
 
 type PsiUserCreateRequest struct {
-	Username string `json:"username" validate:"required"`
+	AdminId string `json:"admin_id" validate:"required"`
 
+	Username string `json:"username" validate:"required"`
 	// Identity Information
 	FirstName      string `json:"first_name" validate:"required"`
 	SecondName     string `json:"second_name" validate:"required"`

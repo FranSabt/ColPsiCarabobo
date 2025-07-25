@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/FranSabt/ColPsiCarabobo/src/admin/admin"
+	admin_controller "github.com/FranSabt/ColPsiCarabobo/src/admin/controller"
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
 	post_db "github.com/FranSabt/ColPsiCarabobo/src/posts/db"
 	text_db "github.com/FranSabt/ColPsiCarabobo/src/text/db"
@@ -105,7 +106,7 @@ func CreatePostAdmin(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	admin_exist, err := admin.AdminExists(admin_uuid, db)
+	admin, err := admin_controller.GetAdminById(admin_uuid, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -114,7 +115,7 @@ func CreatePostAdmin(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	if !admin_exist {
+	if admin.Username == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid id format",
@@ -122,7 +123,7 @@ func CreatePostAdmin(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	err = createPost(request, db, db_text)
+	err = createPost(request, admin, db, db_text)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -134,7 +135,7 @@ func CreatePostAdmin(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 	return c.JSON("ok")
 }
 
-func createPost(request CreatePostRequest, db *gorm.DB, db_text *gorm.DB) error {
+func createPost(request CreatePostRequest, admin models.UserAdmin, db *gorm.DB, db_text *gorm.DB) error {
 	// TODO: Funcion para limpiar el texto
 	text_model := models.TextModel{
 		Text:   request.Text,
@@ -163,6 +164,12 @@ func createPost(request CreatePostRequest, db *gorm.DB, db_text *gorm.DB) error 
 		ShortDescription: request.ShortDescription,
 		TextID:           text_model_saved.ID,
 		IsActive:         true,
+		CreatedAt:        time.Now(),
+		CreateBy:         admin.Username,
+		CreateById:       admin.ID,
+		UpdateBy:         admin.Username,
+		UpdateById:       admin.ID,
+		UpdatedAt:        time.Now(),
 	}
 
 	err = post_db.CreatePost(post_model, db)
@@ -220,7 +227,7 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	admin_exist, err := admin.AdminExists(admin_uuid, db)
+	admin, err := admin_controller.GetAdminById(admin_uuid, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -229,10 +236,10 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	if !admin_exist {
+	if admin.Username == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"error":   "invalid id format",
+			"error":   "admin does not exist",
 			"details": "admin does not exist",
 		})
 	}
@@ -290,7 +297,9 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 	}
 
 	// Añadir siempre el ID del usuario que actualiza
-	postUpdateData.UpdatedBy = &admin_uuid
+	postUpdateData.UpdateBy = admin.Username
+	postUpdateData.UpdateById = admin.ID
+	postUpdateData.UpdatedAt = time.Now()
 
 	// c) Ejecutar la actualización del Post si hay algo que actualizar
 	if update { // Mayor que 1 porque siempre incluimos UpdatedBy

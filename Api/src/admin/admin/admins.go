@@ -2,6 +2,7 @@ package admin
 
 import (
 	"errors"
+	"time"
 
 	db_admin "github.com/FranSabt/ColPsiCarabobo/src/admin/db"
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
@@ -59,6 +60,9 @@ type adminCreateOrUpdateRequest struct {
 	Password   string `json:"password"`
 
 	// Permisos
+	CanCreatePsi           bool `json:"can_create_psi"`
+	CanUpdatePsi           bool `json:"can_update_psi"`
+	CanDeletePsi           bool `json:"can_delete_psi"`
 	CanCreateAdmin         bool `json:"can_create_admin"`
 	CanUpdateAdmin         bool `json:"can_update_admin"`
 	CanDeleteAdmin         bool `json:"can_delete_admin"`
@@ -145,10 +149,36 @@ func CreateOrUpdateAdminHandler(db *gorm.DB) fiber.Handler {
 		// --- 8. MAPEAR DATOS Y PREPARAR PARA GUARDAR ---
 		targetAdmin.Username = payload.Username
 		targetAdmin.Email = payload.Email
+		if targetAdmin.CreateBy == "" {
+			targetAdmin.CreateBy = requesterAdmin.Username
+			targetAdmin.CreateById = &requesterAdmin.ID
+			targetAdmin.CreatedAt = time.Now()
+		}
+		targetAdmin.UpdateBy = requesterAdmin.Username
+		targetAdmin.UpdateById = &requesterAdmin.ID
+		targetAdmin.UpdatedAt = time.Now()
+
 		// Asignar todos los permisos desde el payload
+		// // psi user
+		targetAdmin.CanCreatePsi = payload.CanCreatePsi
+		targetAdmin.CanUpdatePsi = payload.CanUpdatePsi
+		targetAdmin.CanDeletePsi = payload.CanDeletePsi
+		// // admin
 		targetAdmin.CanCreateAdmin = payload.CanCreateAdmin
 		targetAdmin.CanUpdateAdmin = payload.CanUpdateAdmin
-		// ... mapea el resto de los permisos ...
+		targetAdmin.CanDeleteAdmin = payload.CanDeleteAdmin
+		// // Tags
+		targetAdmin.CanCreateTags = payload.CanCreateTags
+		targetAdmin.CanEditTags = payload.CanEditTags
+		targetAdmin.CanDeleteTags = payload.CanDeleteTags
+		// // Post
+		targetAdmin.CanPublish = payload.CanPublish
+		targetAdmin.CanDeletePublish = payload.CanDeletePublish
+		targetAdmin.CanUpdatePublish = payload.CanUpdatePublish
+		// // Notificaciones
+		targetAdmin.CanSendNotifications = payload.CanSendNotifications
+		targetAdmin.CanManageNotifications = payload.CanManageNotifications
+		targetAdmin.CanReadNotifications = payload.CanReadNotifications
 
 		// Hashear la contraseña si se proporcionó una nueva
 		if payload.Password != "" {
@@ -182,6 +212,17 @@ func CreateOrUpdateAdminHandler(db *gorm.DB) fiber.Handler {
 }
 
 func checkPermissionEscalation(requester models.UserAdmin, payload adminCreateOrUpdateRequest) error {
+
+	// --- Permisos sobre PsiUsers ---
+	if payload.CanCreatePsi && !requester.CanCreatePsi {
+		return errors.New("no puedes conceder el permiso 'CanCreatePsi' porque no lo posees")
+	}
+	if payload.CanUpdatePsi && !requester.CanUpdatePsi {
+		return errors.New("no puedes conceder el permiso 'CanUpdatePsi' porque no lo posees")
+	}
+	if payload.CanDeletePsi && !requester.CanDeletePsi {
+		return errors.New("no puedes conceder el permiso 'CanDeletePsi' porque no lo posees")
+	}
 
 	// --- Permisos sobre Administradores ---
 	if payload.CanCreateAdmin && !requester.CanCreateAdmin {

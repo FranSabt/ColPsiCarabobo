@@ -21,19 +21,23 @@ type ImageRequest struct {
 
 const maxImageSize = 5 * 1024 * 1024 // 5MB
 
-func CreateImageModel(user_id uuid.UUID, name, format string) *models.ProfilePicModel {
+func CreateImageModel(user models.PsiUserModel, name, format string) models.ProfilePicModel {
 	id := uuid.New()
 
 	model := models.ProfilePicModel{
-		ID:        id,
-		UserID:    user_id,
-		Name:      sanitizeFileName(name),
-		Format:    format,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:         id,
+		UserID:     user.ID,
+		Name:       sanitizeFileName(name),
+		Format:     format,
+		CreatedAt:  time.Now(),
+		CreateById: &user.ID,
+		CreateBy:   user.Username,
+		UpdatedAt:  time.Now(),
+		UpdateById: &user.ID,
+		UpdateBy:   user.Username,
 	}
 
-	return &model
+	return model
 }
 
 func sanitizeFileName(name string) string {

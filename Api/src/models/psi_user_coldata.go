@@ -39,4 +39,11 @@ type PsiUserColData struct {
 	// Relación con PsiUserModel
 	PsiUserModelID uuid.UUID `gorm:"type:uuid" json:"psi_user_model_id"` // Clave foránea
 	// PsiUserModel   PsiUserModel `gorm:"foreignKey:PsiUserModelID"`
+
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	CreateBy   string     `gorm:"size:255" json:"create_by"`
+	UpdateBy   string     `gorm:"size:255" json:"update_by"`
+	CreateById *uuid.UUID `gorm:"type:uuid" json:"create_by_id"`
+	UpdateById *uuid.UUID `gorm:"type:uuid" json:"update_by_id"`
 }

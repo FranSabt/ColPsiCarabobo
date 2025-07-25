@@ -84,5 +84,18 @@ func AutoMigrateDBImage(db *gorm.DB) error {
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}
+
+	// Elimina primero la tabla intermedia, si existe
+	db.Migrator().DropTable("post_grade_pics")
+
+	// Elimina las tablas principales
+	db.Migrator().DropTable(&models.PostGradePic{})
+	// db.Migrator().DropTable(&models.SpellsModel{})
+
+	// Crea las tablas principales primero
+	err = db.AutoMigrate(&models.PostGradePic{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
 	return nil
 }

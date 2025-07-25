@@ -43,20 +43,20 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 	private.Put("/psi-user", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserSelfInfo(c, db.DB)
 	})
-	// Get self profile pics
-	private.Get("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	// Get self profile pics // publico
+	group.Get("/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.GetMyProfilePic(c, db)
 	})
 	// Create/Upload Profile Pic
-	private.Post("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	private.Post("/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.CreatePsiUserImage(c, db)
 	})
 	// Update Profile Pic
-	private.Put("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	private.Put("/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserImage(c, db)
 	})
 	// Delete Profile Pic - NOTA: HTTP DELETE es más semántico que PUT para borrar.
-	private.Delete("/psi-user/user-pic", func(c *fiber.Ctx) error {
+	private.Delete("/user-pic", func(c *fiber.Ctx) error {
 		// Asumo que tienes un manejador para borrar, si no, puedes crearlo.
 		// return psiuser_presenter.DeletePsiUserImage(c, db)
 		return c.SendString("DELETE /psi-user/user-pic (protected)")

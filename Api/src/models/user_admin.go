@@ -1,6 +1,10 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UserAdmin struct {
 	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
@@ -11,6 +15,11 @@ type UserAdmin struct {
 	IsActive bool   `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 	Key      string `gorm:"size:512;" json:"key"`
 	Sudo     bool   `gorm:"default:false" json:"-"`
+
+	// Permisos sobre UsuariosPsi
+	CanCreatePsi bool `gorm:"default:false" json:"can_create_psi"`
+	CanUpdatePsi bool `gorm:"default:false" json:"can_update_psi"`
+	CanDeletePsi bool `gorm:"default:false" json:"can_delete_psi"`
 
 	// Permisos sobre administradores
 	CanCreateAdmin bool `gorm:"default:false" json:"can_create_admin"`
@@ -31,4 +40,11 @@ type UserAdmin struct {
 	CanCreateTags bool `gorm:"default:false" json:"can_create_tags"` // Puede crear etiquetas
 	CanEditTags   bool `gorm:"default:false" json:"can_edit_tags"`   // Puede editar etiquetas
 	CanDeleteTags bool `gorm:"default:false" json:"can_delete_tags"` // Puede eliminar etiquetas
+
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	CreateBy   string     `gorm:"size:255" json:"create_by"`
+	UpdateBy   string     `gorm:"size:255" json:"update_by"`
+	CreateById *uuid.UUID `gorm:"type:uuid" json:"create_by_id"`
+	UpdateById *uuid.UUID `gorm:"type:uuid" json:"update_by_id"`
 }

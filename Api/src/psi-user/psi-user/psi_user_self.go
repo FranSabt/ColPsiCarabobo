@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"regexp"
+	"time"
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
@@ -300,6 +301,10 @@ func modifiPsiUSerModel(
 	if psi_user_request.CelPhoneOutSideCarabobo != nil {
 		psiuser_model.CelPhoneOutSideCarabobo = *psi_user_request.CelPhoneOutSideCarabobo
 	}
+
+	psiuser_model.UpdateBy = psiuser_model.Username
+	psiuser_model.UpdateById = &psiuser_model.ID
+	psiuser_model.UpdatedAt = time.Now()
 
 	return psiuser_model
 }

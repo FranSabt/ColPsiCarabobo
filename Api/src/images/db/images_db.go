@@ -69,15 +69,17 @@ func GetImageById(imageID uuid.UUID, db *gorm.DB) (*models.ProfilePicModel, erro
 	return &image, nil
 }
 
-func UpdateImageById(imageID uuid.UUID, newImageData []byte, format string, db *gorm.DB, filename string) (bool, error) {
+func UpdateImageById(imageID, user_uuid uuid.UUID, newImageData []byte, format string, db *gorm.DB, filename, username string) (bool, error) {
 	// Opción 1: Update directo (más eficiente)
 	result := db.Model(&models.ProfilePicModel{}).
 		Where("id = ?", imageID).
 		Updates(map[string]interface{}{
-			"image_data": newImageData,
-			"format":     format,
-			"updated_at": time.Now(),
-			"name":       filename,
+			"image_data":   newImageData,
+			"format":       format,
+			"updated_at":   time.Now(),
+			"name":         filename,
+			"update_by":    username,
+			"update_by_id": user_uuid,
 		})
 
 	if result.Error != nil {

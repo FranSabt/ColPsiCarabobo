@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"unicode"
 
+	admin_controller "github.com/FranSabt/ColPsiCarabobo/src/admin/controller"
 	psi_user_controller "github.com/FranSabt/ColPsiCarabobo/src/psi-user/controller"
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	psi_user_mapper "github.com/FranSabt/ColPsiCarabobo/src/psi-user/mapper"
@@ -23,6 +24,41 @@ func UploadCsv(c *fiber.Ctx, db *gorm.DB) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "No se pudo obtener el archivo CSV",
 			"details": err.Error(),
+		})
+	}
+
+	// ---- EXISTE EL ADMIN? ---- //
+	admin_id := c.FormValue("admin_id")
+	if admin_id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Falta el ID del administrador",
+			"details": "El campo admin_id es requerido",
+		})
+	}
+
+	admin_uuid, err := uuid.Parse(admin_id)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	admin, err := admin_controller.GetAdminById(admin_uuid, db)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	if !admin.CanCreatePsi {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "user cant create PsiUser",
+			"details": fmt.Sprintf("user %v cant create a PsiUser", admin.Username),
 		})
 	}
 
@@ -56,7 +92,7 @@ func UploadCsv(c *fiber.Ctx, db *gorm.DB) error {
 	for _, r := range *result {
 		err := db.Transaction(func(tx *gorm.DB) error {
 			// Mapear a los modelos
-			psi_model_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserModel(r)
+			psi_model_mapped := psi_user_mapper.PsiUserCsv_To_PsiUserModel(r, admin)
 
 			// Crear PsiUserModel
 			if err := psi_user_db.CreatePsiUseDb(tx, psi_model_mapped); err != nil {
@@ -122,6 +158,35 @@ func AdminCreatePsiUser(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
+	// ---- EXISTE EL ADMIN? ---- //
+	admin_id := request.AdminId
+
+	admin_uuid, err := uuid.Parse(admin_id)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	admin, err := admin_controller.GetAdminById(admin_uuid, db)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid id format",
+			"details": err.Error(),
+		})
+	}
+
+	if !admin.CanCreatePsi {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "user cant create PsiUser",
+			"details": fmt.Sprintf("user %v cant create a PsiUser", admin.Username),
+		})
+	}
+
 	// ------- Funcion para hacer los check de los campos unicos ------- //
 	can_pass, conflicts, err := psi_user_controller.CheckPsiUserUniqueFields(db, request)
 	if err != nil {
@@ -141,7 +206,7 @@ func AdminCreatePsiUser(c *fiber.Ctx, db *gorm.DB) error {
 	} // check error
 
 	// ------- Create User in DB ------- //
-	psi_user, psi_user_col_data, err := psi_user_controller.CreateNewPsiUser(db, request)
+	psi_user, psi_user_col_data, err := psi_user_controller.CreateNewPsiUser(db, request, admin)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,

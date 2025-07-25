@@ -192,7 +192,7 @@ func UpdateSpecialty(db *gorm.DB, specialty_model *models.PsiSpecialty) error {
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-func DeleteSpecialty(db *gorm.DB, id uint) error {
+func DeleteSpecialty(db *gorm.DB, admin models.UserAdmin, id uint) error {
 	// 1. Buscar la especialidad que se va a "borrar".
 	//    Esto asegura que exista y esté activa antes de continuar.
 	var specialty models.PsiSpecialty
@@ -207,6 +207,8 @@ func DeleteSpecialty(db *gorm.DB, id uint) error {
 	// 2. Cambiar el estado a inactivo.
 	//    Ser explícito con `false` es a menudo más claro que invertir el estado.
 	specialty.Active = !specialty.Active
+	specialty.UpdateBy = admin.Username
+	specialty.UpdateById = admin.ID
 	specialty.UpdatedAt = time.Now()
 
 	// 3. Guardar el cambio en la base de datos.

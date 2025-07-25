@@ -159,10 +159,10 @@ func CreatePsiUserImage(c *fiber.Ctx, db db.StructDb) error {
 
 	// Crear modelo para guardar
 	fmt.Println("Modelo")
-	model := image_controller.CreateImageModel(uid, filename, format)
-	if model == nil {
+	model := image_controller.CreateImageModel(*user, filename, format)
+	if model.ID == uuid.Nil { // Verifica si el UUID es cero
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "Failed to format data to save",
+			"error":   "Failed to create valid model",
 			"success": false,
 		})
 	}
@@ -171,7 +171,7 @@ func CreatePsiUserImage(c *fiber.Ctx, db db.StructDb) error {
 
 	// Guardar en la DB
 	fmt.Println("BD")
-	if err := db_images.SaveUserImage(*model, db.Image); err != nil {
+	if err := db_images.SaveUserImage(model, db.Image); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to save image data",
 			"success": false,
@@ -340,7 +340,7 @@ func UpdatePsiUserImage(c *fiber.Ctx, db db.StructDb) error {
 
 	// Actualizar imagen en la DB usando la nueva función
 	fmt.Println("Actualizando en BD")
-	success, err := db_images.UpdateImageById(uid_image, compressed.Bytes(), format, db.Image, filename)
+	success, err := db_images.UpdateImageById(uid_image, user.ID, compressed.Bytes(), format, db.Image, filename, user.Username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to update image data",

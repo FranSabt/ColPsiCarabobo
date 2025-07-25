@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func PsiUserCsv_To_PsiUserModel(csv psi_user_controller.PsiUserCsv) models.PsiUserModel {
+func PsiUserCsv_To_PsiUserModel(csv psi_user_controller.PsiUserCsv, admin models.UserAdmin) models.PsiUserModel {
 	// Convertir campos que requieren transformación
 	fpv := 0
 	if csv.FPV != "" {
@@ -60,6 +60,13 @@ func PsiUserCsv_To_PsiUserModel(csv psi_user_controller.PsiUserCsv) models.PsiUs
 		PsiUserColDataID:            nil, // Valor por defecto
 		PrimarySpecialty:            "",
 		SecondarySpecialty:          "",
+		// Creation Fields
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		CreateBy:   admin.Username,
+		UpdateBy:   admin.Username,
+		CreateById: &admin.ID,
+		UpdateById: &admin.ID,
 	}
 }
 

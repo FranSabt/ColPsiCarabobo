@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateNewPsiUser(db *gorm.DB, request psi_user_request.PsiUserCreateRequest) (*models.PsiUserModel, *models.PsiUserColData, error) {
+func CreateNewPsiUser(db *gorm.DB, request psi_user_request.PsiUserCreateRequest, admin models.UserAdmin) (*models.PsiUserModel, *models.PsiUserColData, error) {
 
 	// create the psi user
 	psi_user, err := createPsiuserModel(request)
@@ -27,7 +27,7 @@ func CreateNewPsiUser(db *gorm.DB, request psi_user_request.PsiUserCreateRequest
 
 	fmt.Printf("%v", psi_user)
 	// if ok, crete psi-user coldata
-	psi_user_col_data, err := createPsiUserColDataModel(request, psi_user.ID)
+	psi_user_col_data, err := createPsiUserColDataModel(request, psi_user.ID, admin)
 	if err != nil {
 		fmt.Printf("%s", err.Error())
 		return nil, nil, err
@@ -65,14 +65,14 @@ func createPsiuserModel(request psi_user_request.PsiUserCreateRequest) (*models.
 	// Parsear fecha de nacimiento
 	bornDate, err := ParseDateString(request.BornDate)
 	if err != nil {
-		return nil, fmt.Errorf("invalid birth date: %v\n", err)
+		return nil, fmt.Errorf("invalid birth date: %v", err)
 	}
 
 	// Generar contraseña aleatoria segura y su hash
 	password := generateRandomPassword(12) // Longitud de 12 caracteres
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
-		return nil, fmt.Errorf("could not hash password: %v\n", err)
+		return nil, fmt.Errorf("could not hash password: %v", err)
 	}
 
 	fmt.Printf("Password =>  %v\n", password)
@@ -164,7 +164,7 @@ func hashPassword(password string) (string, error) {
 ///////////////////////////////////////////////
 
 func createPsiUserColDataModel(request psi_user_request.PsiUserCreateRequest,
-	psi_user_id uuid.UUID) (*models.PsiUserColData, error) {
+	psi_user_id uuid.UUID, admin models.UserAdmin) (*models.PsiUserColData, error) {
 	graduate_date, err := ParseDateString(request.BornDate)
 	if err != nil {
 		return nil, fmt.Errorf("invalid graduate date: %v", err)
@@ -208,6 +208,14 @@ func createPsiUserColDataModel(request psi_user_request.PsiUserCreateRequest,
 		DateOfLastSolvency: date_last_solvency,
 		DoubleGuild:        request.DoubleGuild,
 		CPSM:               request.CPSM,
+
+		// Creation Fields
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		CreateBy:   admin.Username,
+		UpdateBy:   admin.Username,
+		CreateById: &admin.ID,
+		UpdateById: &admin.ID,
 
 		// Relación con PsiUserModel
 		PsiUserModelID: psi_user_id, // Clave foránea

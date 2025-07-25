@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/FranSabt/ColPsiCarabobo/src/admin/admin"
+	admin_controller "github.com/FranSabt/ColPsiCarabobo/src/admin/controller"
 	specialties_controller "github.com/FranSabt/ColPsiCarabobo/src/specialties/controller"
 	specialties_mapper "github.com/FranSabt/ColPsiCarabobo/src/specialties/mapper"
 	specialties_structs "github.com/FranSabt/ColPsiCarabobo/src/specialties/request-structs"
@@ -40,7 +40,7 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	admin_exist, err := admin.AdminExists(admin_id, db)
+	admin, err := admin_controller.GetAdminById(admin_id, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -49,7 +49,7 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	if !admin_exist {
+	if admin.Username == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid id format",
@@ -82,7 +82,7 @@ func CreatePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	specialty_model := specialties_mapper.SpecialtyRequestToSpecialtyModel(request)
+	specialty_model := specialties_mapper.SpecialtyRequestToSpecialtyModel(request, admin)
 
 	err = specialties_controller.SaveNewSpecialty(db, specialty_model)
 	if err != nil {
@@ -226,7 +226,7 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	admin_exist, err := admin.AdminExists(admin_id, db)
+	admin, err := admin_controller.GetAdminById(admin_id, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -235,7 +235,7 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	if !admin_exist {
+	if admin.Username == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid id format",
@@ -246,7 +246,7 @@ func UpdatePsiSepecialty(c *fiber.Ctx, db *gorm.DB) error {
 	// // TODO: bindear el id
 	// fmt.Println(admin_id)
 
-	err = specialties_controller.UpdatePsiSpecialtyController(&request, db)
+	err = specialties_controller.UpdatePsiSpecialtyController(&request, admin, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -300,7 +300,7 @@ func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	admin_exist, err := admin.AdminExists(admin_uuid, db)
+	admin, err := admin_controller.GetAdminById(admin_uuid, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -309,7 +309,7 @@ func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	if !admin_exist {
+	if admin.Username == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid id format",
@@ -320,7 +320,7 @@ func DeletePsiSpecialty(c *fiber.Ctx, db *gorm.DB) error {
 	// TODO: verificar el administrador
 	// fmt.Println(admin_uuid)
 
-	err = specialties_controller.DeleteSpecialtyController(int64(specialty_id), db)
+	err = specialties_controller.DeleteSpecialtyController(int64(specialty_id), admin, db)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,

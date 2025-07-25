@@ -3,6 +3,7 @@ package specialties_controller
 import (
 	"errors"
 	"regexp"
+	"time"
 
 	// Asegúrate de tener este import si no estaba
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
@@ -83,7 +84,7 @@ func GetPsiSpecialtiesDescriptionController(db *gorm.DB, id uint) (string, error
 // ////////////////////////////////////////////////////
 // ////////////////////////////////////////////////////
 
-func UpdatePsiSpecialtyController(request *specialties_structs.SpecialtyUpdate, db *gorm.DB) error {
+func UpdatePsiSpecialtyController(request *specialties_structs.SpecialtyUpdate, admin models.UserAdmin, db *gorm.DB) error {
 	// 1. Validar los datos de entrada primero. Si fallan, no tocamos la BD.
 	if err := checkUpdateFieldSpecialty(request); err != nil {
 		return err // Error de validación (ej. 400 Bad Request)
@@ -100,10 +101,16 @@ func UpdatePsiSpecialtyController(request *specialties_structs.SpecialtyUpdate, 
 	// 3. Aplicar los cambios al modelo recuperado (si se proporcionaron).
 	if request.Name != "" {
 		model_to_update.Name = request.Name
+		model_to_update.UpdateBy = admin.Username
+		model_to_update.UpdateById = admin.ID
+		model_to_update.UpdatedAt = time.Now()
 	}
 
 	if request.Description != "" {
 		model_to_update.Description = request.Description
+		model_to_update.UpdateBy = admin.Username
+		model_to_update.UpdateById = admin.ID
+		model_to_update.UpdatedAt = time.Now()
 	}
 
 	// 4. ¡PASO CRÍTICO FALTANTE! Guardar el modelo actualizado en la base de datos.
@@ -120,12 +127,12 @@ func UpdatePsiSpecialtyController(request *specialties_structs.SpecialtyUpdate, 
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-func DeleteSpecialtyController(id int64, db *gorm.DB) error {
+func DeleteSpecialtyController(id int64, admin models.UserAdmin, db *gorm.DB) error {
 	if id <= 0 {
 		return errors.New("invalid id")
 	}
 
-	err := specialties_db.DeleteSpecialty(db, uint(id))
+	err := specialties_db.DeleteSpecialty(db, admin, uint(id))
 	if err != nil {
 		return err
 	}

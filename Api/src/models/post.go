@@ -66,19 +66,13 @@ type Post struct {
 	TextID           uint     `json:"text_id,omitempty"`             // no vamos a recuerar el texto directamente, solo si es necesario
 	IsActive         bool     `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 
-	// Timestamps y Soft Delete
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	// DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // Para Soft Deletes
-
 	// Claves foráneas (ocultas en JSON para evitar redundancia)
-	CreatedBy *uuid.UUID `gorm:"type:uuid" json:"create_by"`
-	UpdatedBy *uuid.UUID `gorm:"type:uuid" json:"update_by"`
-
-	// Relaciones de GORM (expuestas en JSON)
-	// 'omitempty' evita que aparezca el campo si es nulo (ej. si un post no tiene updater)
-	Creator *UserAdmin `gorm:"foreignKey:CreatedBy;references:ID" json:"creator,omitempty"`
-	Updater *UserAdmin `gorm:"foreignKey:UpdatedBy;references:ID" json:"updater,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	CreateBy   string    `gorm:"size:255" json:"create_by"`
+	UpdateBy   string    `gorm:"size:255" json:"update_by"`
+	CreateById uuid.UUID `gorm:"type:uuid" json:"create_by_id"`
+	UpdateById uuid.UUID `gorm:"type:uuid" json:"update_by_id"`
 
 	// Imagen asociada
 

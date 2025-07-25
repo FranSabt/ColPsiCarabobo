@@ -60,10 +60,15 @@ func createSudoAdmin(db *gorm.DB) error {
 
 	// Creamos la instancia del admin.
 	adminModel := models.UserAdmin{
-		Username:       adminUsername,
-		Password:       hashedPassword, // Guardamos el hash, no la contraseña original
-		Email:          email,
-		Sudo:           true, // Importante: ¡No olvidemos marcarlo como superusuario!
+		Username: adminUsername,
+		Password: hashedPassword, // Guardamos el hash, no la contraseña original
+		Email:    email,
+		Sudo:     true, // Importante: ¡No olvidemos marcarlo como superusuario!
+		// psiusers
+		CanCreatePsi: true,
+		CanUpdatePsi: true,
+		CanDeletePsi: true,
+		// admins
 		CanCreateAdmin: true,
 		CanUpdateAdmin: true,
 		CanDeleteAdmin: true,
