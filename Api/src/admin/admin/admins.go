@@ -77,138 +77,136 @@ type adminCreateOrUpdateRequest struct {
 	CanDeleteTags          bool `json:"can_delete_tags"`
 }
 
-func CreateOrUpdateAdminHandler(db *gorm.DB) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		// --- 1. AUTENTICACIÓN: Obtener ID del admin que realiza la petición (del token) ---
-		var request adminCreateOrUpdateRequest
+func CreateOrUpdateAdminHandler(c *fiber.Ctx, db *gorm.DB) error {
+	// --- 1. AUTENTICACIÓN: Obtener ID del admin que realiza la petición (del token) ---
+	var request adminCreateOrUpdateRequest
 
-		if err := c.BodyParser(&request); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"error":   "Invalid request format",
-			})
-		}
-		uuid_parsed, err := uuid.Parse(request.ID)
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Invalid request format",
+		})
+	}
+	uuid_parsed, err := uuid.Parse(request.ID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "not valid id",
+		})
+	}
+
+	requesterAdmin, err := db_admin.GetAdminById(uuid_parsed, db)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "not valid id",
+		})
+	}
+
+	// --- 3. VALIDACIÓN DEL BODY ---
+	var payload adminCreateOrUpdateRequest
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Formato de petición inválido: " + err.Error()})
+	}
+
+	// --- 4. DISTINGUIR ENTRE CREACIÓN Y ACTUALIZACIÓN ---
+	isUpdateRequest := payload.NewAdminId != ""
+	var targetAdmin *models.UserAdmin // El admin que será creado o actualizado
+
+	// --- 5. AUTORIZACIÓN Y LÓGICA DE ACTUALIZACIÓN ---
+	if isUpdateRequest {
+
+		uuid_parsed_to_update, err := uuid.Parse(request.ID)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"error":   "not valid id",
 			})
 		}
-
-		requesterAdmin, err := db_admin.GetAdminById(uuid_parsed, db)
+		if !requesterAdmin.CanUpdateAdmin {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "No tienes permisos para actualizar administradores."})
+		}
+		// Si es actualización, primero obtenemos el admin existente de la BD.
+		targetAdmin, err = db_admin.GetAdminById(uuid_parsed_to_update, db)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"error":   "not valid id",
-			})
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "El administrador a actualizar no fue encontrado."})
 		}
-
-		// --- 3. VALIDACIÓN DEL BODY ---
-		var payload adminCreateOrUpdateRequest
-		if err := c.BodyParser(&payload); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Formato de petición inválido: " + err.Error()})
+	} else { // --- 6. AUTORIZACIÓN Y LÓGICA DE CREACIÓN ---
+		if !requesterAdmin.CanCreateAdmin {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "No tienes permisos para crear administradores."})
 		}
-
-		// --- 4. DISTINGUIR ENTRE CREACIÓN Y ACTUALIZACIÓN ---
-		isUpdateRequest := payload.NewAdminId != ""
-		var targetAdmin *models.UserAdmin // El admin que será creado o actualizado
-
-		// --- 5. AUTORIZACIÓN Y LÓGICA DE ACTUALIZACIÓN ---
-		if isUpdateRequest {
-
-			uuid_parsed_to_update, err := uuid.Parse(request.ID)
-			if err != nil {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"success": false,
-					"error":   "not valid id",
-				})
-			}
-			if !requesterAdmin.CanUpdateAdmin {
-				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "No tienes permisos para actualizar administradores."})
-			}
-			// Si es actualización, primero obtenemos el admin existente de la BD.
-			targetAdmin, err = db_admin.GetAdminById(uuid_parsed_to_update, db)
-			if err != nil {
-				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "El administrador a actualizar no fue encontrado."})
-			}
-		} else { // --- 6. AUTORIZACIÓN Y LÓGICA DE CREACIÓN ---
-			if !requesterAdmin.CanCreateAdmin {
-				return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "No tienes permisos para crear administradores."})
-			}
-			if payload.Password == "" {
-				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "La contraseña es obligatoria al crear un nuevo administrador."})
-			}
+		if payload.Password == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "La contraseña es obligatoria al crear un nuevo administrador."})
 		}
+	}
 
-		// --- 7. VERIFICACIÓN DE ESCALADA DE PRIVILEGIOS (EL PASO CLAVE) ---
-		if err := checkPermissionEscalation(*requesterAdmin, payload); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Intento de escalada de privilegios denegado: " + err.Error()})
-		}
+	// --- 7. VERIFICACIÓN DE ESCALADA DE PRIVILEGIOS (EL PASO CLAVE) ---
+	if err := checkPermissionEscalation(*requesterAdmin, payload); err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Intento de escalada de privilegios denegado: " + err.Error()})
+	}
 
-		// --- 8. MAPEAR DATOS Y PREPARAR PARA GUARDAR ---
-		targetAdmin.Username = payload.Username
-		targetAdmin.Email = payload.Email
-		if targetAdmin.CreateBy == "" {
-			targetAdmin.CreateBy = requesterAdmin.Username
-			targetAdmin.CreateById = &requesterAdmin.ID
-			targetAdmin.CreatedAt = time.Now()
-		}
-		targetAdmin.UpdateBy = requesterAdmin.Username
-		targetAdmin.UpdateById = &requesterAdmin.ID
-		targetAdmin.UpdatedAt = time.Now()
+	// --- 8. MAPEAR DATOS Y PREPARAR PARA GUARDAR ---
+	targetAdmin.Username = payload.Username
+	targetAdmin.Email = payload.Email
+	if targetAdmin.CreateBy == "" {
+		targetAdmin.CreateBy = requesterAdmin.Username
+		targetAdmin.CreateById = &requesterAdmin.ID
+		targetAdmin.CreatedAt = time.Now()
+	}
+	targetAdmin.UpdateBy = requesterAdmin.Username
+	targetAdmin.UpdateById = &requesterAdmin.ID
+	targetAdmin.UpdatedAt = time.Now()
 
-		// Asignar todos los permisos desde el payload
-		// // psi user
-		targetAdmin.CanCreatePsi = payload.CanCreatePsi
-		targetAdmin.CanUpdatePsi = payload.CanUpdatePsi
-		targetAdmin.CanDeletePsi = payload.CanDeletePsi
-		// // admin
-		targetAdmin.CanCreateAdmin = payload.CanCreateAdmin
-		targetAdmin.CanUpdateAdmin = payload.CanUpdateAdmin
-		targetAdmin.CanDeleteAdmin = payload.CanDeleteAdmin
-		// // Tags
-		targetAdmin.CanCreateTags = payload.CanCreateTags
-		targetAdmin.CanEditTags = payload.CanEditTags
-		targetAdmin.CanDeleteTags = payload.CanDeleteTags
-		// // Post
-		targetAdmin.CanPublish = payload.CanPublish
-		targetAdmin.CanDeletePublish = payload.CanDeletePublish
-		targetAdmin.CanUpdatePublish = payload.CanUpdatePublish
-		// // Notificaciones
-		targetAdmin.CanSendNotifications = payload.CanSendNotifications
-		targetAdmin.CanManageNotifications = payload.CanManageNotifications
-		targetAdmin.CanReadNotifications = payload.CanReadNotifications
+	// Asignar todos los permisos desde el payload
+	// // psi user
+	targetAdmin.CanCreatePsi = payload.CanCreatePsi
+	targetAdmin.CanUpdatePsi = payload.CanUpdatePsi
+	targetAdmin.CanDeletePsi = payload.CanDeletePsi
+	// // admin
+	targetAdmin.CanCreateAdmin = payload.CanCreateAdmin
+	targetAdmin.CanUpdateAdmin = payload.CanUpdateAdmin
+	targetAdmin.CanDeleteAdmin = payload.CanDeleteAdmin
+	// // Tags
+	targetAdmin.CanCreateTags = payload.CanCreateTags
+	targetAdmin.CanEditTags = payload.CanEditTags
+	targetAdmin.CanDeleteTags = payload.CanDeleteTags
+	// // Post
+	targetAdmin.CanPublish = payload.CanPublish
+	targetAdmin.CanDeletePublish = payload.CanDeletePublish
+	targetAdmin.CanUpdatePublish = payload.CanUpdatePublish
+	// // Notificaciones
+	targetAdmin.CanSendNotifications = payload.CanSendNotifications
+	targetAdmin.CanManageNotifications = payload.CanManageNotifications
+	targetAdmin.CanReadNotifications = payload.CanReadNotifications
 
-		// Hashear la contraseña si se proporcionó una nueva
-		if payload.Password != "" {
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error al procesar la contraseña."})
-			}
-			targetAdmin.Password = string(hashedPassword)
-		}
-
-		// --- 9. PERSISTENCIA ---
-		err = db_admin.CreateOrUpdateAdmin(*targetAdmin, db) // Usamos la función que devuelve el objeto y un error
+	// Hashear la contraseña si se proporcionó una nueva
+	if payload.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "No se pudo guardar el administrador: " + err.Error()})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error al procesar la contraseña."})
 		}
+		targetAdmin.Password = string(hashedPassword)
+	}
 
-		if isUpdateRequest {
-			return c.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"error":   "not valid id",
-			})
+	// --- 9. PERSISTENCIA ---
+	err = db_admin.CreateOrUpdateAdmin(*targetAdmin, db) // Usamos la función que devuelve el objeto y un error
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "No se pudo guardar el administrador: " + err.Error()})
+	}
 
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	if isUpdateRequest {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
 			"error":   "not valid id",
 		})
 
 	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"error":   "not valid id",
+	})
+
 }
 
 func checkPermissionEscalation(requester models.UserAdmin, payload adminCreateOrUpdateRequest) error {

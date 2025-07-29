@@ -13,7 +13,7 @@ type UserAdmin struct {
 	Email    string `gorm:"size:255;unique;not null" json:"email"`
 	Password string `gorm:"size:512;not null" json:"-"`
 	IsActive bool   `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
-	Key      string `gorm:"size:512;" json:"key"`
+	Key      string `gorm:"size:512;" json:"-"`
 	Sudo     bool   `gorm:"default:false" json:"-"`
 
 	// Permisos sobre UsuariosPsi

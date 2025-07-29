@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
+	"time"
 	"unicode"
 
 	admin_controller "github.com/FranSabt/ColPsiCarabobo/src/admin/controller"
@@ -184,6 +186,16 @@ func AdminCreatePsiUser(c *fiber.Ctx, db *gorm.DB) error {
 			"success": false,
 			"error":   "user cant create PsiUser",
 			"details": fmt.Sprintf("user %v cant create a PsiUser", admin.Username),
+		})
+	}
+
+	// ------- CHECK DE CAMPOS DEL REQUEST ------- //
+	errors_list := isOkPsiUserFields(request)
+	if len(errors_list) > 0 {
+		return c.Status(http.StatusCreated).JSON(fiber.Map{
+			"success":   false,
+			"message":   "errors in request fields",
+			"conflicts": errors_list, // Opcional: devolver los datos creados
 		})
 	}
 
@@ -479,4 +491,90 @@ func hasFieldsToUpdate(request psi_user_request.PsiUserUpdateRequest) bool {
 	}
 
 	return false
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+func isOkPsiUserFields(request psi_user_request.PsiUserCreateRequest) []string {
+	var errors []string
+
+	if request.Nationality != "v" && request.Nationality != "e" {
+		errors = append(errors, "invalid nationality")
+	}
+
+	if request.Genre != "m" && request.Genre != "f" {
+		errors = append(errors, "invalid genre")
+	}
+
+	if request.PhoneCarabobo != "" && !isValidVenezuelanPhoneNumber(request.PhoneCarabobo) {
+		errors = append(errors, "invalid phone Carabobo")
+
+	}
+
+	if request.CelPhoneCarabobo != "" && !isValidVenezuelanPhoneNumber(request.CelPhoneCarabobo) {
+		errors = append(errors, "invalid cell phone Carabobo")
+
+	}
+
+	if request.PublicPhone != "" && !isValidVenezuelanPhoneNumber(request.PublicPhone) {
+		errors = append(errors, "invalid public phone Carabobo")
+
+	}
+
+	if request.CelPhoneOutSideCarabobo != "" && !isValidVenezuelanPhoneNumber(request.CelPhoneOutSideCarabobo) {
+		errors = append(errors, "invalid cel phone outside Carabobo")
+
+	}
+
+	if request.PhoneOutSideCarabobo != "" && !isValidVenezuelanPhoneNumber(request.PhoneOutSideCarabobo) {
+		errors = append(errors, "invalid phone outside Carabobo")
+
+	}
+
+	if !isValidDateYYYYMMDD(request.BornDate) {
+		errors = append(errors, "invalid born date")
+	}
+
+	if !isValidDateYYYYMMDD(request.GraduateDate) {
+		errors = append(errors, "invalid graduate date")
+	}
+
+	if !isValidDateYYYYMMDD(request.DateOfLastSolvency) {
+		errors = append(errors, "invalid last solvency date")
+	}
+
+	return errors
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+var nonDigitsRegex = regexp.MustCompile(`\D`)
+var venezuelanPhoneRegex = regexp.MustCompile(`^(0|58)(412|414|424|416|426|2\d{2})\d{7}$`)
+
+// IsValidVenezuelanPhoneNumber recibe un número de teléfono en cualquier formato y retorna true si es válido.
+func isValidVenezuelanPhoneNumber(phone string) bool {
+
+	cleanedPhone := nonDigitsRegex.ReplaceAllString(phone, "")
+
+	return venezuelanPhoneRegex.MatchString(cleanedPhone)
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+
+// IsValidDateYYYYMMDD verifica si un string es una fecha válida en formato "YYYY-MM-DD".
+// Retorna 'true' si el formato y la fecha son válidos, de lo contrario 'false'.
+func isValidDateYYYYMMDD(dateString string) bool {
+
+	const layout = "2006-01-02"
+
+	_, err := time.Parse(layout, dateString)
+
+	// Si no hay error (err == nil), la fecha es válida.
+	return err == nil
 }

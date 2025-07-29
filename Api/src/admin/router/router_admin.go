@@ -23,4 +23,12 @@ func AdminRouter(group fiber.Router, db db.StructDb) {
 		return admin.GetAdmins(c, db.DB)
 	})
 
+	private.Post("/admin", func(c *fiber.Ctx) error {
+		return admin.CreateOrUpdateAdminHandler(c, db.DB)
+	})
+
+	private.Put("/admin", func(c *fiber.Ctx) error {
+		return admin.CreateOrUpdateAdminHandler(c, db.DB)
+	})
+
 }

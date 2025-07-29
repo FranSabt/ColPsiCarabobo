@@ -7,7 +7,7 @@ import (
 )
 
 type TextModel struct {
-	ID         uint       `gorm:"primaryKey" json:"id"`
+	ID         uuid.UUID  `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	Text       string     `gorm:"type:text" json:"description"`
 	Active     bool       `gorm:"default:true;not null" json:"-"` // Correcto: Oculto del JSON
 	CreatedAt  time.Time  `json:"created_at"`

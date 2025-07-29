@@ -14,6 +14,10 @@ type PisUserPostGrade struct {
 
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 
+	// Clave foranea
+	// Relación con PsiUser
+	PsiUserID uuid.UUID `gorm:"type:uuid" json:"psi_user_id"` // Clave foránea
+
 	PostGradeTitle          string `gorm:"column:post_grade_title;not null;size:255" json:"post_grade_title"`
 	PostGradeUniversity     string `gorm:"column:post_grade_university;not null;size:255" json:"post_grade_university"`
 	PostGradeGraduationYear string `gorm:"column:post_grade_graduation_year;not null;size:50" json:"post_grade_graduation_year"`

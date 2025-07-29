@@ -1,22 +1,8 @@
 automatizar los test de Postman
 
-quien crea y modifica entradas
-Testeasr POST
-
-Ruta de getPost solo psicologos
-
 
 Crear todo lo relativo a los postgrados
     - Falta Rutas
-
-
-ruta, crear admin
-
-verificar la validez de los datos para los modelos
-    -- genero solo m o f
-    -- nacionaldiad v o e
-
-No retornar el key del token
 
 -------------------------
 

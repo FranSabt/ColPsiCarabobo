@@ -17,6 +17,42 @@ import (
 
 func GetPosts(c *fiber.Ctx, db *gorm.DB) error {
 
+	// post_type := c.Query("post_type", "")
+	page := c.QueryInt("page", 1)
+	page_size := c.QueryInt("page_size", 20)
+
+	posts, err := post_db.GetActivePostsPaginated("public", page, page_size, db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
+			"error":   "Error al obtener los psicólogos",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(posts)
+}
+
+func GetPostsPsi(c *fiber.Ctx, db *gorm.DB) error {
+
+	// post_type := c.Query("post_type", "")
+	page := c.QueryInt("page", 1)
+	page_size := c.QueryInt("page_size", 20)
+
+	posts, err := post_db.GetActivePostsPaginated("psi", page, page_size, db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"succes":  false,
+			"error":   "Error al obtener los psicólogos",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(posts)
+}
+
+func GetPostsAdmin(c *fiber.Ctx, db *gorm.DB) error {
+
 	post_type := c.Query("post_type", "")
 	page := c.QueryInt("page", 1)
 	page_size := c.QueryInt("page_size", 20)
@@ -35,16 +71,16 @@ func GetPosts(c *fiber.Ctx, db *gorm.DB) error {
 
 func GetPostText(c *fiber.Ctx, db *gorm.DB, database_text *gorm.DB) error {
 
-	id := c.QueryInt("id", 0)
-	if id < 1 {
+	id := c.Query("id", "")
+
+	uint_id, err := uuid.Parse(id)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"succes":  false,
-			"error":   "invalid id int",
-			"details": "id can be 0 or less",
+			"error":   fmt.Sprintf("on the post id: %v", id),
+			"details": err.Error(),
 		})
 	}
-
-	uint_id := uint(id)
 
 	posts, err := post_db.GetPostById(uint_id, db)
 	if err != nil {
@@ -185,7 +221,7 @@ func createPost(request CreatePostRequest, admin models.UserAdmin, db *gorm.DB, 
 // Este es el DTO correcto para una petición de actualización.
 // Lo que se actualiza viene en el body. El ID del post viene en la URL.
 type UpdatePostRequest struct {
-	Id               int64   `json:"post_id"`
+	Id               string  `json:"post_id"`
 	Name             *string `json:"name,omitempty"`
 	Type             *string `json:"type,omitempty"`
 	ShortDescription *string `json:"short_description,omitempty"`
@@ -208,8 +244,8 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 	}
 
 	// Obtener el ID del POST desde la URL (ej: /posts/123)
-	postID := request.Id
-	if postID <= 0 {
+	postID, err := uuid.Parse(request.Id)
+	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Invalid post ID provided in URL",
@@ -244,8 +280,7 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 		})
 	}
 
-	uint_id := uint(postID)
-	post_to_update, err := post_db.GetPostById(uint_id, db)
+	post_to_update, err := post_db.GetPostById(postID, db)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return c.Status(http.StatusNotFound).JSON(fiber.Map{
@@ -303,7 +338,7 @@ func UpdatePost(c *fiber.Ctx, db *gorm.DB, db_text *gorm.DB) error {
 
 	// c) Ejecutar la actualización del Post si hay algo que actualizar
 	if update { // Mayor que 1 porque siempre incluimos UpdatedBy
-		if _, err := post_db.UpdatePost(db, uint_id, postUpdateData); err != nil {
+		if _, err := post_db.UpdatePost(db, postID, postUpdateData); err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update post metadata"})
 		}
 	}

@@ -59,12 +59,12 @@ func (pt PostType) Value() (driver.Value, error) { return pt.String(), nil }
 
 // --- Modelo Post Mejorado ---
 type Post struct {
-	ID               uint     `gorm:"primaryKey" json:"id"`
-	Name             string   `gorm:"size:50;not null;uniqueIndex" json:"name"` // Añadido uniqueIndex para evitar títulos duplicados
-	Type             PostType `gorm:"type:varchar(10);default:public;not null" json:"type"`
-	ShortDescription string   `gorm:"size:250" json:"short_description"`
-	TextID           uint     `json:"text_id,omitempty"`             // no vamos a recuerar el texto directamente, solo si es necesario
-	IsActive         bool     `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
+	ID               uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	Name             string    `gorm:"size:50;not null;uniqueIndex" json:"name"` // Añadido uniqueIndex para evitar títulos duplicados
+	Type             PostType  `gorm:"type:varchar(10);default:public;not null" json:"type"`
+	ShortDescription string    `gorm:"size:250" json:"short_description"`
+	TextID           uuid.UUID `json:"text_id,omitempty"`             // no vamos a recuerar el texto directamente, solo si es necesario
+	IsActive         bool      `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
 
 	// Claves foráneas (ocultas en JSON para evitar redundancia)
 	CreatedAt  time.Time `json:"created_at"`

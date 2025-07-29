@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,7 +20,7 @@ func CreatePost(post_model models.Post, db *gorm.DB) error {
 	return nil
 }
 
-func GetPostById(id uint, db *gorm.DB) (*models.Post, error) {
+func GetPostById(id uuid.UUID, db *gorm.DB) (*models.Post, error) {
 	psiUser := &models.Post{}
 	err := db.Where("id = ?", id).First(psiUser).Error
 	if err != nil {
@@ -98,7 +99,7 @@ func GetActivePostsPaginated(post_type string, page, pageSize int, db *gorm.DB) 
 
 // UpdatePost busca un post por su ID y actualiza sus campos.
 // Devuelve el post actualizado o un error.
-func UpdatePost(db *gorm.DB, id uint, updateData models.Post) (*models.Post, error) {
+func UpdatePost(db *gorm.DB, id uuid.UUID, updateData models.Post) (*models.Post, error) {
 	var post models.Post
 
 	if err := db.Model(&post).Updates(updateData).Error; err != nil {

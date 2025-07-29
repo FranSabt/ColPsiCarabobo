@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/FranSabt/ColPsiCarabobo/src/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +26,7 @@ func CreateTextDb(db *gorm.DB, textData models.TextModel) (*models.TextModel, er
 
 // GetTextByIDDb busca un TextModel por su ID.
 // Devuelve el TextModel encontrado o un error si no existe.
-func GetTextByIDDb(db *gorm.DB, id uint) (*models.TextModel, error) {
+func GetTextByIDDb(db *gorm.DB, id uuid.UUID) (*models.TextModel, error) {
 	var text models.TextModel
 
 	// Usamos First, que devuelve un error gorm.ErrRecordNotFound si no lo encuentra.
@@ -49,7 +50,7 @@ func GetTextByIDDb(db *gorm.DB, id uint) (*models.TextModel, error) {
 // UpdateTextDb actualiza un TextModel existente por su ID.
 // Recibe el ID y un mapa de los campos a actualizar.
 // Devuelve un error si algo falla.
-func UpdateTextDb(db *gorm.DB, id uint, updateData map[string]interface{}) error {
+func UpdateTextDb(db *gorm.DB, id uuid.UUID, updateData map[string]interface{}) error {
 	// Primero, verificamos que el registro exista para evitar actualizaciones "fantasma"
 	var text models.TextModel
 	if err := db.First(&text, id).Error; err != nil {

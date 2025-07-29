@@ -11,8 +11,8 @@ type PsiUserModel struct {
 	Username string    `gorm:"size:25;unique;not null" json:"username"`
 	Email    string    `gorm:"size:255;unique;not null" json:"email"`
 	Password string    `gorm:"size:512;not null" json:"-"`
-	Key      string    `gorm:"size:512;" json:"key"`
-	IsActive bool      `gorm:"default:true" json:"is_active"` // Por defecto, el admin está activo
+	Key      string    `gorm:"size:512;" json:"-"`
+	IsActive bool      `gorm:"default:true" json:"is_active"` // Por defecto, está activo
 
 	// Identity
 	FirstName      string    `gorm:"size:255;not null" json:"first_name"`
