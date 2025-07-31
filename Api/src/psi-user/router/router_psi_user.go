@@ -27,6 +27,22 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 		return psiuser_presenter.PsiUserLogin(c, db.DB)
 	})
 
+	// Get self profile pics // publico
+	group.Get("/user-pic", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetMyProfilePic(c, db)
+	})
+
+	// --- RUTAS PÚBLICAS PARA POSTGRADOS ---
+	// Obtener los detalles de un postgrado por su ID
+	group.Get("/postgrade/:id", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetPsiUserPostgradeById(c, db.DB)
+	})
+
+	// Obtener el archivo de imagen de un postgrado por el ID DE LA IMAGEN
+	group.Get("/postgrade/image/:id", func(c *fiber.Ctx) error {
+		return psiuser_presenter.GetPostgradeImageById(c, db)
+	})
+
 	//==================================================//
 	//      RUTAS PRIVADAS (PARA USUARIOS LOGUEADOS)    //
 	//==================================================//
@@ -43,10 +59,8 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 	private.Put("/psi-user", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserSelfInfo(c, db.DB)
 	})
-	// Get self profile pics // publico
-	group.Get("/user-pic", func(c *fiber.Ctx) error {
-		return psiuser_presenter.GetMyProfilePic(c, db)
-	})
+
+	// --- RUTAS PARA FOTOS DE PERFIL ---
 	// Create/Upload Profile Pic
 	private.Post("/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.CreatePsiUserImage(c, db)
@@ -55,25 +69,40 @@ func PsiUserRouter(group fiber.Router, db db.StructDb) {
 	private.Put("/user-pic", func(c *fiber.Ctx) error {
 		return psiuser_presenter.UpdatePsiUserImage(c, db)
 	})
-	// Delete Profile Pic - NOTA: HTTP DELETE es más semántico que PUT para borrar.
+	// Delete Profile Pic
 	private.Delete("/user-pic", func(c *fiber.Ctx) error {
-		// Asumo que tienes un manejador para borrar, si no, puedes crearlo.
 		// return psiuser_presenter.DeletePsiUserImage(c, db)
 		return c.SendString("DELETE /psi-user/user-pic (protected)")
 	})
 
 	//==================================================//
+	//       RUTAS PARA POSTGRADOS (PRIVADAS)           //
+	//==================================================//
+	// Un usuario logueado puede gestionar sus propios postgrados.
+
+	// Crear un nuevo postgrado
+	private.Post("/postgrade", func(c *fiber.Ctx) error {
+		// Asumiendo que CreatePsiUserPotgradeRefactored es el nombre final de la función de creación.
+		return psiuser_presenter.CreatePsiUserPotgradeRefactored(c, db)
+	})
+
+	// Actualizar un postgrado existente por su ID
+	// El :id es un parámetro de ruta que capturaremos en el handler con c.Params("id")
+	private.Put("/postgrade/:id", func(c *fiber.Ctx) error {
+		return psiuser_presenter.UpdatePsiUserPostgrade(c, db)
+	})
+
+	// Borrar (soft delete) un postgrado por su ID
+	private.Delete("/postgrade/:id", func(c *fiber.Ctx) error {
+		return psiuser_presenter.SoftDeletePsiUserPostgrade(c, db)
+	})
+
+	//==================================================//
 	//       RUTAS DE ADMINISTRADOR (AÚN MÁS PRIVADAS)   //
 	//==================================================//
-	// Estas rutas también están en 'group', por lo que son públicas.
-	// Deberían tener su propio grupo y, idealmente, un middleware adicional
-	// que verifique el rol de "admin" en el token.
 
 	admin := group.Group("/admin")
-	// Primero, requiere que el usuario esté logueado.
-	// admin.Use(middleware.ProtectedWithDynamicKey(db.DB))
-	// Segundo, requiere que el usuario tenga el rol de admin.
-	admin.Use(middleware.ProtectedAdminWithDynamicKey(db.DB)) // <-- Deberías crear este middleware
+	admin.Use(middleware.ProtectedAdminWithDynamicKey(db.DB))
 
 	// create PSI
 	admin.Post("/psi-user", func(c *fiber.Ctx) error {

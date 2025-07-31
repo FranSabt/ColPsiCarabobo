@@ -37,12 +37,6 @@ func connectWithRetries(connectFunc func() (*gorm.DB, error), dbName string, ret
 }
 
 func main() {
-	app := fiber.New(fiber.Config{
-		BodyLimit: 4 * 1024 * 1024, // Límite de 4 MB en el body
-	})
-
-	// Logger
-	app.Use(config.ResponseLogger)
 
 	// Cargar las variables de entorno (esto ya lo tenías bien)
 	adminUsername := config.EnvConfig("ADMIN_USERNAME")
@@ -74,6 +68,13 @@ func main() {
 	}
 
 	// --- Configuración de Rutas y Servidor ---
+	app := fiber.New(fiber.Config{
+		BodyLimit: 4 * 1024 * 1024, // Límite de 4 MB en el body
+		Prefork:   false,
+	})
+
+	// Logger
+	app.Use(config.ResponseLogger)
 
 	// Root route
 	app.Get("/", func(c *fiber.Ctx) error {

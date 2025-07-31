@@ -1,9 +1,5 @@
 automatizar los test de Postman
 
-
-Crear todo lo relativo a los postgrados
-    - Falta Rutas
-
 -------------------------
 
 TipTap para bio

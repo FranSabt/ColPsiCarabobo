@@ -77,11 +77,9 @@ func Connect() (*gorm.DB, error) {
 func AutoMigrateDB(db *gorm.DB) error {
 	// Elimina primero la tabla intermedia, si existe
 	db.Migrator().DropTable("psi_users")
-
 	// Elimina las tablas principales
 	db.Migrator().DropTable(&models.PsiUserModel{})
 	// db.Migrator().DropTable(&models.SpellsModel{})
-
 	// Crea las tablas principales primero
 	err := db.AutoMigrate(&models.PsiUserModel{})
 	if err != nil {
@@ -114,6 +112,13 @@ func AutoMigrateDB(db *gorm.DB) error {
 	db.Migrator().DropTable("posts")
 	db.Migrator().DropTable(&models.Post{})
 	err = db.AutoMigrate(&models.Post{})
+	if err != nil {
+		return fmt.Errorf("error al migrar las tablas: %w", err)
+	}
+
+	db.Migrator().DropTable("pis_user_post_grades")
+	db.Migrator().DropTable(&models.PisUserPostGrade{})
+	err = db.AutoMigrate(&models.PisUserPostGrade{})
 	if err != nil {
 		return fmt.Errorf("error al migrar las tablas: %w", err)
 	}

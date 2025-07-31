@@ -22,6 +22,7 @@ type PisUserPostGrade struct {
 	PostGradeUniversity     string `gorm:"column:post_grade_university;not null;size:255" json:"post_grade_university"`
 	PostGradeGraduationYear string `gorm:"column:post_grade_graduation_year;not null;size:50" json:"post_grade_graduation_year"`
 	PostGradeDescription    string `gorm:"column:post_grade_description;type:text" json:"post_grade_description"`
+	Active                  bool   `gorm:"default:true;not null" json:"-"` // Correcto: Oculto del JSON
 
 	// Estos campos son probablemente claves foráneas a otra tabla (ej: 'pictures' o 'files')
 	// El puntero (*) indica que son "nullable" (pueden ser nulos en la BBDD)

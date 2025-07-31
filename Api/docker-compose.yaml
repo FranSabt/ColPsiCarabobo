@@ -65,9 +65,12 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - db
-      - db_images
-      - db_text
+      db:
+        condition: service_healthy
+      db_images:
+        condition: service_healthy
+      db_text:
+        condition: service_healthy
     environment:
       # DB DATA
       - ADMIN_USERNAME=admin
