@@ -108,3 +108,7 @@ func DeleteImageById(imageID uuid.UUID, db *gorm.DB) (bool, error) {
 
 	return true, nil
 }
+
+func SavePostGradePicModel(image models.PostGradePic, db *gorm.DB) error {
+	return db.Create(&image).Error
+}

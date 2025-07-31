@@ -8,14 +8,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FranSabt/ColPsiCarabobo/db"
+	image_controller "github.com/FranSabt/ColPsiCarabobo/src/images/controller"
+	db_images "github.com/FranSabt/ColPsiCarabobo/src/images/db"
 	psi_user_controller "github.com/FranSabt/ColPsiCarabobo/src/psi-user/controller"
 	psi_user_db "github.com/FranSabt/ColPsiCarabobo/src/psi-user/db"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-func CreatePsiUserPotgrade(c *fiber.Ctx, db *gorm.DB) error {
+func CreatePsiUserPotgrade(c *fiber.Ctx, db db.StructDb) error {
 	// --- Recopilación de datos del formulario ---
 	psi_user_id := c.FormValue("psi_user_id")
 	post_grade_title := c.FormValue("post_grade_title")
@@ -32,6 +34,13 @@ func CreatePsiUserPotgrade(c *fiber.Ctx, db *gorm.DB) error {
 
 	// ---- Validar fecha del titulo
 	post_grade_graduation_year_clean, err := formatearFecha(post_grade_graduation_year)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid date format",
+			"details": err.Error(),
+		})
+	}
 
 	// --- Validación del Usuario ---
 	uuid, err := uuid.Parse(psi_user_id)
@@ -43,7 +52,7 @@ func CreatePsiUserPotgrade(c *fiber.Ctx, db *gorm.DB) error {
 		})
 	}
 
-	user, err := psi_user_db.GetPsiUserById(db, uuid)
+	user, err := psi_user_db.GetPsiUserById(db.DB, uuid)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Can't connect to DB",
@@ -145,7 +154,7 @@ func CreatePsiUserPotgrade(c *fiber.Ctx, db *gorm.DB) error {
 		error_messages = append(error_messages, "Image 3: "+err_3.Error())
 	}
 
-	if len(error_messages) > 0 {
+	if len(error_messages) == 3 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "error processing one or more images",
@@ -165,13 +174,75 @@ func CreatePsiUserPotgrade(c *fiber.Ctx, db *gorm.DB) error {
 
 	if image_1 != nil && err_1 == nil {
 		// crear el PostPicModel
-		// guardar el PostPicModel
-		// llevar el id a postgraduate_model
-	}
-	// Las variables image_1, format_1, filename_1 (y las demás) ya están
-	// disponibles para ser usadas.
+		image_model_1, err_1 := image_controller.CreatePostGradePicModel(filename_1, format_1, user.Username, user.ID, image_data_array[0], image_1)
+		if err_1 == nil {
+			err_1 = db_images.SavePostGradePicModel(image_model_1, db.Image)
 
-	return nil // Placeholder
+			if err_1 == nil {
+				postgraduate_model.PicOne = &image_model_1.ID
+			}
+		}
+	}
+
+	if image_2 != nil && err_2 == nil {
+		// crear el PostPicModel
+		image_model_2, err_2 := image_controller.CreatePostGradePicModel(filename_2, format_2, user.Username, user.ID, image_data_array[1], image_2)
+		if err_2 == nil {
+			err_2 = db_images.SavePostGradePicModel(image_model_2, db.Image)
+
+			if err_2 == nil {
+				postgraduate_model.PicOne = &image_model_2.ID
+			}
+		}
+	}
+
+	if image_3 != nil && err_3 == nil {
+		// crear el PostPicModel
+		image_model_3, err_3 := image_controller.CreatePostGradePicModel(filename_3, format_3, user.Username, user.ID, image_data_array[2], image_3)
+		if err_3 == nil {
+			err_3 = db_images.SavePostGradePicModel(image_model_3, db.Image)
+
+			if err_3 == nil {
+				postgraduate_model.PicOne = &image_model_3.ID
+			}
+		}
+	}
+
+	if err_1 != nil {
+		error_messages = append(error_messages, "Image 1: "+err_1.Error())
+	}
+	if err_2 != nil {
+		error_messages = append(error_messages, "Image 2: "+err_2.Error())
+	}
+	if err_3 != nil {
+		error_messages = append(error_messages, "Image 3: "+err_3.Error())
+	}
+
+	if len(error_messages) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "error processing one or more images",
+			// CORRECCIÓN: La sintaxis para un array de strings en JSON es esta
+			"details": error_messages,
+		})
+	}
+
+	err = psi_user_db.SavePostGradeModel(postgraduate_model, db.DB)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "error processing one or more images",
+			// CORRECCIÓN: La sintaxis para un array de strings en JSON es esta
+			"details": error_messages,
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"success": true,
+		"error":   error_messages,
+		// CORRECCIÓN: La sintaxis para un array de strings en JSON es esta
+		"data": postgraduate_model,
+	})
 }
 
 var mesesEnEspanol = map[time.Month]string{

@@ -8,7 +8,9 @@ import (
 )
 
 func CreatePsiUserPostGradeModel(psi_user_id uuid.UUID, post_grade_title, post_grade_university, post_grade_graduation_year, post_grade_description string) models.PisUserPostGrade {
+	id := uuid.New()
 	postgrade := models.PisUserPostGrade{
+		ID:        id,
 		PsiUserID: psi_user_id,
 
 		PostGradeTitle:          post_grade_title,

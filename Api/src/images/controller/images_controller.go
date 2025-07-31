@@ -40,6 +40,31 @@ func CreateImageModel(user models.PsiUserModel, name, format string) models.Prof
 	return model
 }
 
+func CreatePostGradePicModel(file_name, format, psi_user_name string, psi_user_id uuid.UUID, data []byte, img image.Image) (models.PostGradePic, error) {
+	id := uuid.New()
+
+	compressed, _, err := CompressImages(&data, img)
+	if err != nil {
+		return models.PostGradePic{}, err
+	}
+	image_data := compressed.Bytes()
+
+	model := models.PostGradePic{
+		ID:         id,
+		Name:       sanitizeFileName(file_name),
+		Format:     format,
+		ImageData:  image_data,
+		CreatedAt:  time.Now(),
+		CreateById: &psi_user_id,
+		CreateBy:   psi_user_name,
+		UpdatedAt:  time.Now(),
+		UpdateById: &psi_user_id,
+		UpdateBy:   psi_user_name,
+	}
+
+	return model, nil
+}
+
 func sanitizeFileName(name string) string {
 	name = strings.ReplaceAll(name, "..", "")
 	name = strings.ReplaceAll(name, "=", "")

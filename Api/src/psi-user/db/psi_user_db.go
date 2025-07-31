@@ -254,3 +254,13 @@ func GetPsiUserByUsernameOrEmal(db *gorm.DB, username, query string) (*models.Ps
 	}
 	return &psi_user, nil
 }
+
+func SavePostGradeModel(model models.PisUserPostGrade, db *gorm.DB) error {
+	result := db.Create(model)
+	if result.Error != nil {
+		// Si hay un error, lo retornamos
+		return result.Error
+	}
+
+	return nil
+}
